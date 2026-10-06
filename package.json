@@ -1,0 +1,22 @@
+{
+  "name": "timevault-qa",
+  "version": "1.0.0",
+  "description": "QA automation framework for the TimeVault e-commerce application",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "keywords": ["qa", "playwright", "typescript", "automation", "e2e"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4"
+  }
+}
