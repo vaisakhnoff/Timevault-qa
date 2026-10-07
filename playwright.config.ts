@@ -13,6 +13,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  /* Max time one test can run. Remote host (Render) can be slow / cold-start. */
+  timeout: 90_000,
+  /* Default timeout for expect() web-first assertions. */
+  expect: { timeout: 15_000 },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,7 +30,11 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-     baseURL: 'http://localhost:3000',
+    baseURL: 'https://time-vault-ecommerce-web-app.onrender.com/',
+
+    /* Remote host can be slow; allow generous navigation + action time. */
+    navigationTimeout: 60_000,
+    actionTimeout: 20_000,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
