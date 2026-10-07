@@ -48,13 +48,17 @@ Adjustments: treat blueprint test counts as rough capacity, not targets; boundar
   - `playwright.config.ts` projects: `setup` (testMatch *.setup.ts) → `chromium` depends on setup + uses `storageState: playwright/.auth/user.json`. firefox/webkit left logged-out (no storageState).
   - `tests/smoke.spec.ts` — uses `test.use({ storageState: { cookies: [], origins: [] } })` to force logged-OUT for login-page smoke tests.
   - `tests/auth.spec.ts` — authenticated proof test: goto `/`, assert Logout link visible (session testing). Header is conditional on `user` var; Logout link href=/logout only renders when logged in. FIX APPLIED: import from `../fixtures/base.fixture` (was `@playwright/test`).
-  - 7 tests green (setup + smoke x? + auth proof).
+  - 8 tests green (setup + smoke on 3 browsers + auth proof on chromium).
+  - FINAL config: Pattern B. chromium = full authenticated suite (storageState + dependencies:['setup']). firefox/webkit = logged-out, `grep: /@smoke/` only (fast cross-browser).
+  - auth.spec proof uses `#userMenuBtn` visible (Logout link is hidden in a dropdown → not usable for toBeVisible).
 
-## Current phase: 5 — User Module tests (NEXT)
-Build real POMs + tests for user features. Likely order per blueprint: shop/browse → product details → cart (boundary: min(stock,4), incl stock=0) → wishlist → address → profile → wallet. Authenticated tests reuse storageState; logged-out where appropriate.
+## Current phase: 5 — User Module tests (IN PROGRESS)
+Build real POMs + tests for user features. Order: shop/browse → product details → cart (boundary: min(stock,4), incl stock=0) → wishlist → address → profile → wallet.
+- Shop route: `/shopPage`. Local view `views/user/shop.ejs` (newer "vault" UI; deployed likely matches). Has: search form `#searchInput` name="search" action=/shopPage GET; category filter list; brand chips; price range; product cards + sort + pagination further down.
+- Deployed UI differs from older local snapshots — ALWAYS verify selectors against live site (use codegen/inspector), don't trust old EJS reads.
 
 ### Exact next task
-Commit Phase 4, then start Phase 5 with the Shop/Browse page: build `pages/user/shop.page.ts` POM + first browse test. Will need to read deployed shop page (/shopPage) selectors first.
+Phase 5 Task 1: build `pages/user/shop.page.ts` POM + add `shopPage` to the fixture + first browse test (navigate to /shopPage, assert product cards render). User to discover live selectors via `npx playwright codegen <url>/shopPage`.
 
 ## Open decisions / notes
 - App also runs locally (`~/Documents/Time-Vault-ecommerce-web-app`, :3000) but tests target deployed Render URL.
