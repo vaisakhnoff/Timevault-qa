@@ -40,16 +40,24 @@ Adjustments: treat blueprint test counts as rough capacity, not targets; boundar
   - **baseURL switched to deployed Render app:** `https://time-vault-ecommerce-web-app.onrender.com/`. Slower/cold-start → config timeouts raised: test 90s, expect 15s, navigation 60s, action 20s.
   - 6 tests green (1 skipped). `.env` currently empty (loads 0 vars).
 
-## Current phase: 4 — Authentication tests (NEXT)
-Goal: real login test + `storageState` reuse. Prereqs:
-1. A registered user account on the deployed Render site (signup uses OTP email per blueprint — needs real inbox). USER TO CONFIRM if account exists.
-2. Wire dotenv properly (`import 'dotenv/config'` in config, or configure in playwright.config). Populate `.env` with TEST_USER_EMAIL / TEST_USER_PASSWORD (+ admin). Create `.env.example` with placeholders (committed).
-3. Un-skip the valid-login test; add storageState setup project so authenticated tests reuse session.
+## Completed (cont.)
+- **Phase 4 (Authentication):** DONE.
+  - dotenv wired at top of `playwright.config.ts` (`dotenv.config({ path: ... })`). `.env` loads (5 vars). `.env.example` committed with placeholders.
+  - User has a real registered account on the Render site; creds in `.env` (TEST_USER_EMAIL/PASSWORD).
+  - `tests/auth.setup.ts` — setup project logs in once via LoginPage, waits `networkidle` then `waitForURL(/\/$/)`, saves `playwright/.auth/user.json` (gitignored). Reliable after adding networkidle wait.
+  - `playwright.config.ts` projects: `setup` (testMatch *.setup.ts) → `chromium` depends on setup + uses `storageState: playwright/.auth/user.json`. firefox/webkit left logged-out (no storageState).
+  - `tests/smoke.spec.ts` — uses `test.use({ storageState: { cookies: [], origins: [] } })` to force logged-OUT for login-page smoke tests.
+  - `tests/auth.spec.ts` — authenticated proof test: goto `/`, assert Logout link visible (session testing). Header is conditional on `user` var; Logout link href=/logout only renders when logged in. FIX APPLIED: import from `../fixtures/base.fixture` (was `@playwright/test`).
+  - 7 tests green (setup + smoke x? + auth proof).
+
+## Current phase: 5 — User Module tests (NEXT)
+Build real POMs + tests for user features. Likely order per blueprint: shop/browse → product details → cart (boundary: min(stock,4), incl stock=0) → wishlist → address → profile → wallet. Authenticated tests reuse storageState; logged-out where appropriate.
 
 ### Exact next task
-Awaiting user answer: do they have a usable registered account on the Render site? Then proceed with Phase 4 dotenv + .env.example + auth setup.
+Commit Phase 4, then start Phase 5 with the Shop/Browse page: build `pages/user/shop.page.ts` POM + first browse test. Will need to read deployed shop page (/shopPage) selectors first.
 
 ## Open decisions / notes
-- App also runs locally (`~/Documents/Time-Vault-ecommerce-web-app`, `npm start`, :3000) but testing targets the deployed Render URL now.
-- `.env` is gitignored; `.env.example` (placeholders) will be committed in Phase 4.
+- App also runs locally (`~/Documents/Time-Vault-ecommerce-web-app`, :3000) but tests target deployed Render URL.
+- `.env` gitignored; `.env.example` committed.
+- Cart boundary rule reminder: max = min(stock, 4); test stock=0, lower edges (0, negatives, non-integers), HTTP 400 on exceed.
 - Commit typo in `4bb5524` ("projectwith") — left as-is.

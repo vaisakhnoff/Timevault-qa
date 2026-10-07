@@ -4,9 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -42,19 +42,32 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+
+    {
+    name: 'setup',
+    testMatch: /.*\.setup\.ts/,   // only runs *.setup.ts files
+  },
+
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'],
+         storageState: 'playwright/.auth/user.json',
+       },
+
+       dependencies: ['setup'],
     },
 
+    // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      grep: /@smoke/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      grep: /@smoke/,
     },
 
     /* Test against mobile viewports. */

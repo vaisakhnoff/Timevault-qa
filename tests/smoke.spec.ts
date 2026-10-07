@@ -1,6 +1,8 @@
 import { test, expect } from "../fixtures/base.fixture";
 import envConfig from "../config/env.config";
 
+test.use({ storageState: { cookies: [], origins: [] } });  
+
 
 test.describe('User Login Smoke Tests', () => {
 
