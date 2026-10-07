@@ -11,12 +11,21 @@
     "test:ui": "playwright test --ui",
     "report": "playwright show-report"
   },
-  "keywords": ["qa", "playwright", "typescript", "automation", "e2e"],
+  "keywords": [
+    "qa",
+    "playwright",
+    "typescript",
+    "automation",
+    "e2e"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6"
   }
 }
