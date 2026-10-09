@@ -57,11 +57,28 @@ Build real POMs + tests for user features. Order: shop/browse → product detail
 - Shop route: `/shopPage`. Local view `views/user/shop.ejs` (newer "vault" UI; deployed likely matches). Has: search form `#searchInput` name="search" action=/shopPage GET; category filter list; brand chips; price range; product cards + sort + pagination further down.
 - Deployed UI differs from older local snapshots — ALWAYS verify selectors against live site (use codegen/inspector), don't trust old EJS reads.
 
-### Exact next task
-Phase 5 Task 1: build `pages/user/shop.page.ts` POM + add `shopPage` to the fixture + first browse test (navigate to /shopPage, assert product cards render). User to discover live selectors via `npx playwright codegen <url>/shopPage`.
+### Phase 5 goal: complete user module in one session
+Order (MUST-HAVE core journey):
+1. Shop — browse DONE, search +/- DONE; sort test IN PROGRESS (native `#sortSelect`, selectOption, verify ascending prices via `.vault-price-current` parsed).
+2. Product Details — `/productDetails?id=...`; verify name/price/stock render; add-to-cart/wishlist buttons.
+3. Cart — add, update qty, remove; BOUNDARY: max = min(stock,4), stock=0, qty>limit → HTTP 400. Richest QA.
+4. Wishlist — add, remove, move to cart.
+5. Address — CRUD (add/edit/delete), 3/page pagination.
+
+DEFERRED (justified): profile image upload (base64/canvas + ephemeral images), wallet top-up (Razorpay OOS), full checkout/orders (E2E phase 8), change email/password (OTP OOS).
+
+Shop selectors: sort `<select id="sortSelect">` values newest|price_asc|price_desc|name_asc|name_desc → sets `?sort=`; price `.vault-price-current` (₹ + Indian commas), original `.vault-price-original`; empty state `<h4>No Timepieces Found</h4>`; card `.vault-product-card`; name `.vault-product-name`; count `#productCount`; search `#searchInput` + title "Execute Search"; detail link `/productDetails?id=<id>`; add-to-cart `a[title="Add to Bag"]`; wishlist `a[title="Save to Wishlist"]`.
 
 ## Open decisions / notes
 - App also runs locally (`~/Documents/Time-Vault-ecommerce-web-app`, :3000) but tests target deployed Render URL.
 - `.env` gitignored; `.env.example` committed.
 - Cart boundary rule reminder: max = min(stock, 4); test stock=0, lower edges (0, negatives, non-integers), HTTP 400 on exceed.
 - Commit typo in `4bb5524` ("projectwith") — left as-is.
+
+## Phase 11 optimization backlog
+- storageState setup re-runs login on EVERY run (setup is a chromium dependency). Correct for CI (fresh session) but wasteful for local single-file iteration. OPTIMIZE in Phase 11: conditionally `setup.skip()` if `playwright/.auth/user.json` exists and is fresh (e.g. < 1h via fs.statSync mtime). Keep always-run default for now; document as deliberate perf improvement.
+- Shop sort: used URL-driven `goto('/shopPage?sort=...')` because native `#sortSelect` is hidden behind a custom dropdown widget (selectOption timed out — not visible). URL approach tests sort correctness directly.
+
+## Phase 5 progress
+- Shop module COMPLETE: browse, search +/-, sort (price_asc ascending verified). 5 tests green on chromium.
+- NEXT: Product Details module.
