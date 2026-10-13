@@ -82,3 +82,17 @@ Shop selectors: sort `<select id="sortSelect">` values newest|price_asc|price_de
 ## Phase 5 progress
 - Shop module COMPLETE: browse, search +/-, sort (price_asc ascending verified). 5 tests green on chromium.
 - NEXT: Product Details module.
+
+## Environment switch (local vs Render)
+- `playwright.config.ts` now reads `baseURL` from `process.env.BASE_URL` (fallback http://localhost:3000). Switch envs by editing ONE line in `.env`.
+- Timeouts lowered for local speed: test 60s, expect 10s, navigation 30s, action 15s.
+- Local app: `~/Documents/Time-Vault-ecommerce-web-app` `npm start` → http://localhost:3000. Local DB shares same seed as deployed (Titan id 6aad1146c76606074021e7ec resolves on both; test user likely exists on both).
+- Render free tier is slow/cold-start → prefer local for dev. For CI/portfolio demo can point BASE_URL back to Render.
+
+## Cart module notes (SweetAlert handling)
+- App uses SweetAlert2 everywhere; backdrop blocks Playwright clicks. PATTERN: dismiss the dialog as part of the POM action that triggers it.
+  - `addToCart()` clicks "Continue Browsing" after add.
+  - `removeFirstItem()` clicks remove → confirm "Remove" → app shows success dialog then `window.location.reload()`; wait for load.
+- Cart tests use `test.describe.configure({ mode: 'serial' })` — single shared account cart can't be mutated by parallel workers (was causing detached-element races + count flipping).
+- Use web-first `expect(cartItems).toHaveCount(0)` not one-shot `getItemCount()`+toBe (reload is async).
+- afterEach `removeAllItems()` for isolation. Count (rows) vs quantity (units in a row) are distinct.

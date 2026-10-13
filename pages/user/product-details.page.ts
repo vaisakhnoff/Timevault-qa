@@ -53,5 +53,7 @@ this.decreaseQtyButton = page.locator('button[onclick="updateQuantity(\'decrease
       async addToCart():Promise<void>{
 
       await  this.addToCartButton.click();
+       const continueBtn = this.page.getByRole('button', { name: 'Continue Browsing' });
+  await continueBtn.click();
       }
 }

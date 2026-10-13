@@ -2,12 +2,15 @@ import { test as base } from '@playwright/test';
 import { LoginPage } from '../pages/user/login.page';
 import { ShopPage } from '../pages/user/shop.page';
 import { ProductDetailsPage } from '../pages/user/product-details.page';
+import { CartPage } from '../pages/user/cart.page';
 
 
 type TestFixtures = {
   loginPage: LoginPage;
   shopPage :ShopPage;
-  productDetailsPage : ProductDetailsPage
+  productDetailsPage : ProductDetailsPage;
+  cartPage : CartPage;
+
 };
 
 export const test = base.extend<TestFixtures>({
@@ -24,6 +27,9 @@ export const test = base.extend<TestFixtures>({
   productDetailsPage : async ({page},use)=>{
     await use(new ProductDetailsPage(page))
   },
+  cartPage : async({page},use)=>{
+    await use(new CartPage(page))
+  }
 
 
 });

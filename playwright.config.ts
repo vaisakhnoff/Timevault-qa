@@ -13,10 +13,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  */
 export default defineConfig({
   testDir: './tests',
-  /* Max time one test can run. Remote host (Render) can be slow / cold-start. */
-  timeout: 90_000,
+  /* Max time one test can run. Generous enough for remote (Render) if BASE_URL points there. */
+  timeout: 60_000,
   /* Default timeout for expect() web-first assertions. */
-  expect: { timeout: 15_000 },
+  expect: { timeout: 10_000 },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -29,12 +29,12 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'https://time-vault-ecommerce-web-app.onrender.com/',
+    /* Base URL comes from .env (BASE_URL). Switch local vs Render by editing .env only. */
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
 
-    /* Remote host can be slow; allow generous navigation + action time. */
-    navigationTimeout: 60_000,
-    actionTimeout: 20_000,
+    /* Generous enough for a remote host, comfortable for local. */
+    navigationTimeout: 30_000,
+    actionTimeout: 15_000,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

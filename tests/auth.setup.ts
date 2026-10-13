@@ -13,9 +13,11 @@ setup('authenticate as user',async ({page})=>{
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(envConfig.userEmail,envConfig.userPassword);
-    await page.waitForLoadState('networkidle');
 
+    // Login success signal: redirect to the homepage. The user menu button
+    // only renders when authenticated, so wait for it before saving state.
     await page.waitForURL(/\/$/);
+    await page.locator('#userMenuBtn').waitFor({ state: 'visible' });
 
 
  await page.context().storageState({
