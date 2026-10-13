@@ -5,6 +5,9 @@ import { ProductDetailsPage } from '../pages/user/product-details.page';
 import { CartPage } from '../pages/user/cart.page';
 import {  WishlistPage } from '../pages/user/wishlist.page';
 import { AddressPage } from '../pages/user/address.page';
+import { ProfilePage } from '../pages/user/profile.page';
+import { WalletPage } from '../pages/user/wallet.page';
+import { OrdersPage } from '../pages/user/orders.page';
 
 
 type TestFixtures = {
@@ -14,6 +17,9 @@ type TestFixtures = {
   cartPage : CartPage;
   wishlistPage :WishlistPage
   addressPage :AddressPage
+  profilePage : ProfilePage
+  walletPage : WalletPage
+  ordersPage : OrdersPage
 
 };
 
@@ -41,6 +47,18 @@ export const test = base.extend<TestFixtures>({
  addressPage: async ({ page }, use) => {
   await use(new AddressPage(page));
 },
+
+  profilePage: async ({ page }, use) => {
+    await use(new ProfilePage(page));
+  },
+
+  walletPage: async ({ page }, use) => {
+    await use(new WalletPage(page));
+  },
+
+  ordersPage: async ({ page }, use) => {
+    await use(new OrdersPage(page));
+  },
 
 });
 

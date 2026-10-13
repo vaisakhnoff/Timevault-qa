@@ -81,7 +81,8 @@ Shop selectors: sort `<select id="sortSelect">` values newest|price_asc|price_de
 
 ## Phase 5 progress
 - Shop module COMPLETE: browse, search +/-, sort (price_asc ascending verified). 5 tests green on chromium.
-- NEXT: Product Details module.
+- Product Details, Cart (incl. boundary min(stock,4) → "Limit Reached" SweetAlert), Wishlist, Address modules DONE.
+- Phase 5b (view-only pages) DONE: Profile, Wallet, Orders POMs + specs. Full suite 23 green on chromium.
 
 ## Environment switch (local vs Render)
 - `playwright.config.ts` now reads `baseURL` from `process.env.BASE_URL` (fallback http://localhost:3000). Switch envs by editing ONE line in `.env`.
@@ -124,5 +125,29 @@ Key gotchas learned this phase:
 - web-first `expect(locator).toHaveCount(n)` not one-shot count()+toBe for async changes.
 - NEVER import afterEach from 'node:test' — use Playwright test.afterEach.
 
+## Convention: interview questions doc
+- `docs/INTERVIEW_QUESTIONS.md` — append a new section at the END of each completed phase (questions + short study answers, grounded in what was built). Phases 1–5 done.
+
 ## NEXT: commit Phase 5, then decide Phase 6 (Admin) or Phase 7 (API).
 Recommendation: Phase 7 API next while cart/wishlist boundary + missing-auth findings are fresh (addWishlist/removeFromWishlist no auth; /addToCart 400 boundary matrix; /dashboard-canceled-data no auth).
+
+## Phase 5b (Option A): user view-only pages — Profile, Wallet, Orders
+Rationale: cover pages that DON'T need a placed order. Order lifecycle (checkout→orders→cancel/return/review) deferred to Phase 8 E2E. Razorpay top-up / OTP / profile image upload stay OUT of scope.
+Routes: Profile `/userProfile` (profile.ejs), Wallet `/wallet` (wallet.ejs), Orders `/orders` (userOrders.ejs — NOT /userOrders).
+Selectors:
+- Profile: name `.profile-name`, referral `#referral-code-text`, "Edit Profile" text.
+- Wallet: title heading "Vault Wallet", balance `h2` filter hasText ₹ .first(), section "Ledger & Transactions", empty "No ledger transactions recorded yet.".
+- Orders: title "Order History", cards `.vault-card`, empty "No Acquisitions Found".
+Tasks: 1 Profile POM+fixture+spec; 2 Wallet; 3 Orders (resilient: if count>0 assert cards else assert empty state).
+Concept: resilient assertions for unknown DB data state (assert always-present elements, or either-or for data-dependent).
+Then: full npm test, commit "feat: add profile, wallet, and orders view tests", add Phase 5b interview Qs.
+AFTER 5b: Phase 6 Admin (needs TEST_ADMIN_EMAIL/PASSWORD in .env + admin.json storageState + separate admin project). admin login `/admin/login` #adminEmail #adminPassword btn "Log In" → /admin/dashboard. BUG target: GET /admin/dashboard-canceled-data has NO auth.
+
+## Phase 5b — Profile / Wallet / Orders (view-only) notes
+- Scope: assert only always-present elements (page titles, section headings, user identity) — NOT transactional data that may not exist. No Razorpay/OTP/checkout (deferred).
+- Routes verified against app source: `/userProfile`, `/wallet`, `/orders` (all `auth.checkSession`).
+- Profile POM: `.profile-name` (h4), `#referral-code-text`, `getByText('Edit Profile')`.
+- Wallet POM: title `getByRole('heading',{name:'Vault Wallet'})` (markup is `Vault <span>Wallet</span>` → a11y name concatenates); balance `h2`.filter(hasText '₹').first(); ledger `getByText('Ledger & Transactions')`.
+- Orders POM: title `getByRole('heading',{name:'Order History'})`; empty state `getByRole('heading',{name:'No Acquisitions Found'})`.
+  - GOTCHA: both real order cards AND the empty-state container use `.vault-card`. Scoped `orderCards` with `.filter({ has: heading /^Order #/ })` so a zero-order account doesn't miscount the empty-state card as 1. Enables the resilient "cards OR empty state" assertion.
+- QA concept introduced: resilient assertions for unknown data state (count>0 → cards visible, else → empty state). Test valid regardless of DB seed.
