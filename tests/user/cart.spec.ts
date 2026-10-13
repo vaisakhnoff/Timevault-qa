@@ -28,10 +28,11 @@ test.describe("TimeVault Cart Tests", () => {
         await productDetailsPage.goto('6aad1146c76606074021e7ec');
         await productDetailsPage.addToCart();
         await cartPage.goto();
+        const before = parseInt(await cartPage.qtyInput.first().inputValue(), 10);
 
         await cartPage.increaseButton.first().click();
 
-        await expect(cartPage.qtyInput.first()).toHaveValue('2'); 
+        await expect(cartPage.qtyInput.first()).toHaveValue(String(before+1)); 
     })
 
     test('@regression removing an item empties the cart', async ({ productDetailsPage, cartPage }) => {

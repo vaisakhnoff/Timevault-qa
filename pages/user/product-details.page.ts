@@ -1,7 +1,6 @@
 
 
 import {Page,Locator, expect} from '@playwright/test';
-import { time } from 'node:console';
 
 
 export class ProductDetailsPage {
