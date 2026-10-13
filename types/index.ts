@@ -23,3 +23,15 @@ export interface Credentials {
   email: string;
   password: string;
 }
+
+export interface Address {
+  name: string;
+  addressType: string;
+  city: string;
+  landMark: string;
+  state: string;
+  pincode: string;
+  phone_no: string;
+  altPhone_no: string;
+}
+

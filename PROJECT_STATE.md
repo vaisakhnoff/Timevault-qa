@@ -96,3 +96,33 @@ Shop selectors: sort `<select id="sortSelect">` values newest|price_asc|price_de
 - Cart tests use `test.describe.configure({ mode: 'serial' })` — single shared account cart can't be mutated by parallel workers (was causing detached-element races + count flipping).
 - Use web-first `expect(cartItems).toHaveCount(0)` not one-shot `getItemCount()`+toBe (reload is async).
 - afterEach `removeAllItems()` for isolation. Count (rows) vs quantity (units in a row) are distinct.
+
+## Phase 7 API authorization targets (confirmed in code)
+- `POST /addWishlist` and `POST /removeFromWishlist` have NO `auth.checkSession` (GET /wishlist does). Real authz gap → Phase 7 API test: call these WITHOUT a session, assert they should reject (likely don't → documentable bug).
+- Cart boundary matrix for Phase 7 API: `/addToCart` qty 1✅ 4✅ 5→400 0→? ; `/updateCart` qty>stock→400; min(stock,4) low-stock edge (stock=2 → limit 2).
+- Wishlist add success dialog title "Vault Wishlist" (default OK button). addToCart success "Allocated to Bag" (Continue Browsing / View Bag).
+
+## Phase 5 progress (cont.)
+- Cart module COMPLETE: add, update qty, remove, isolation (serial + afterEach). Case A boundary (stepper clamps at 4) in product-details.spec @boundary. Case B (cart >4 alert) intentionally dropped → covered authoritatively in Phase 7 API.
+- NEXT: Wishlist module, then Address. Then commit + close Phase 5.
+
+## PHASE 5 COMPLETE (User Module)
+Modules done, all green on chromium (local http://localhost:3000):
+- Shop: browse, search +/-, sort (price_asc ascending). 5 tests.
+- Product Details: info display, add-to-cart w/ qty, @boundary stepper clamps at 4. 3 tests.
+- Cart: add, update qty, remove, isolation (serial + afterEach removeAllItems). SweetAlert dismiss pattern.
+- Wishlist: add appears in wishlist (serial + cleanup). wishlistButton via getByTitle('Save to Wishlist'); add dialog "Vault Wishlist" OK.
+- Address: add (Faker data) + delete, CRUD. @faker-js/faker installed (devDep). addressCards via getByTitle('Delete Address'). Submit "Save Address". waitForURL(/\/userAddress/) — glob **/userAddress fails on query params ?message=...&status=success.
+
+Key gotchas learned this phase:
+- Playwright glob `**/path` anchors to END → breaks with query params; use regex contains or `**/path**`.
+- Icon-only buttons: getByTitle or attribute selector (onclick^=), not getByRole name.
+- Hidden native <select> behind custom widget → selectOption fails; use URL param or force.
+- readonly qty input → drive via +/- buttons, not fill.
+- SweetAlert backdrop blocks clicks → dismiss dialog inside the POM action.
+- Shared-account mutable state (cart/wishlist/address) → `test.describe.configure({ mode: 'serial' })` + afterEach cleanup.
+- web-first `expect(locator).toHaveCount(n)` not one-shot count()+toBe for async changes.
+- NEVER import afterEach from 'node:test' — use Playwright test.afterEach.
+
+## NEXT: commit Phase 5, then decide Phase 6 (Admin) or Phase 7 (API).
+Recommendation: Phase 7 API next while cart/wishlist boundary + missing-auth findings are fresh (addWishlist/removeFromWishlist no auth; /addToCart 400 boundary matrix; /dashboard-canceled-data no auth).

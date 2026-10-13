@@ -10,7 +10,6 @@ export class CartPage {
     readonly decreaseButton : Locator;
     readonly removeButton : Locator;
     readonly subtotal : Locator;
-    readonly limitAlert : Locator;
 
      
     constructor(page : Page){

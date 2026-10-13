@@ -1,6 +1,7 @@
 
 
 import {Page,Locator, expect} from '@playwright/test';
+import { time } from 'node:console';
 
 
 export class ProductDetailsPage {
@@ -25,7 +26,7 @@ export class ProductDetailsPage {
          this.currentPrice = page.locator('.col-lg-6 .vault-price-current');
          this.quantityInput = page.locator('#sst')
          this.addToCartButton =  page.getByText('Acquire Piece', { exact: true });
-         this.wishlistButton = page.getByRole('button',{name  :"Save to Wishlist"})
+         this.wishlistButton =  page.getByTitle('Save to Wishlist')
          this.cartSuccessDialog = page.getByText("Allocated to Bag");
          this.quantityLimitDialog = page.getByText("Allocation Limit")
          this.increaseQtyButton = page.locator('button[onclick="updateQuantity(\'increase\')"]');
@@ -55,5 +56,10 @@ this.decreaseQtyButton = page.locator('button[onclick="updateQuantity(\'decrease
       await  this.addToCartButton.click();
        const continueBtn = this.page.getByRole('button', { name: 'Continue Browsing' });
   await continueBtn.click();
+      }
+
+      async addToWishlist():Promise<void>{
+
+        await this.wishlistButton.click()
       }
 }
