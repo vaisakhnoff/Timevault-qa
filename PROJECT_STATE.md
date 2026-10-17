@@ -151,3 +151,53 @@ AFTER 5b: Phase 6 Admin (needs TEST_ADMIN_EMAIL/PASSWORD in .env + admin.json st
 - Orders POM: title `getByRole('heading',{name:'Order History'})`; empty state `getByRole('heading',{name:'No Acquisitions Found'})`.
   - GOTCHA: both real order cards AND the empty-state container use `.vault-card`. Scoped `orderCards` with `.filter({ has: heading /^Order #/ })` so a zero-order account doesn't miscount the empty-state card as 1. Enables the resilient "cards OR empty state" assertion.
 - QA concept introduced: resilient assertions for unknown data state (count>0 → cards visible, else → empty state). Test valid regardless of DB seed.
+
+
+## PHASE 6 — Admin Module (IN PROGRESS)
+Two-role storageState architecture DONE and verified (24 passed):
+- `pages/admin/admin-login.page.ts` (#adminEmail, #adminPassword, "Log In" → /admin/dashboard).
+- `tests/admin.setup.ts` → saves `playwright/.auth/admin.json`.
+- playwright.config projects: `setup-user` (auth.setup.ts), `setup-admin` (admin.setup.ts), `chromium` (user, testIgnore tests/admin/, dep setup-user), `admin` (testMatch tests/admin/*.spec.ts, admin.json, dep setup-admin), firefox/webkit @smoke.
+- Admin specs import `test` from `@playwright/test` directly (NOT user fixture) + instantiate admin POMs directly (Option A — don't pollute shared fixture). Run with `--project=admin`.
+- `.env` has working TEST_ADMIN_EMAIL/PASSWORD (admin login confirmed).
+
+Admin Category selectors (/admin/category): name `#product_name`, desc `#descriptionId`, add submit `form[action="/admin/addCategory"] button[type=submit]`, rows `table.table tbody tr`, list/unlist `#listing-btn-<id>`, edit `a[href^="/admin/editCategory"]`.
+Admin routes use mix of adminIsLogin vs admincheckSession (editCategory uses admincheckSession — possible authz quirk, Phase 7). /admin/dashboard-canceled-data has NO auth (bug target).
+
+NEXT admin modules to cover: Categories (add) → Brands → Products → Coupons → Customers block/unblock → Orders status. Use Faker for unique names (duplicate-conflict avoidance). Consider cleanup/isolation (admin CRUD mutates shared DB).
+
+## Phase 6 — Admin Module (IN PROGRESS)
+- Plan: `docs/ADMIN_MODULE_PLAN.md` (6 POMs + 6 specs). Admin specs import from `fixtures/admin.fixture.ts` (injects admin POMs, mirrors user base.fixture), run under `admin` project (storageState admin.json via `setup-admin`). Run: `npx playwright test --project=admin`. Add each new admin POM to the admin fixture as built.
+- **Categories DONE:** `pages/admin/category.page.ts` + `tests/admin/category.spec.ts`. 1 test green (add category).
+  - Add flow is AJAX + SweetAlert success → `location.reload()`; POM dismisses OK then waits for reload.
+  - App validation: name letters+spaces 2-50, desc 10-200 → Faker value sanitized (strip non-letters + alpha suffix).
+  - Category table PAGINATED (4/page) → row count misleads; assert on true-total label `getTotalCount()` (/\d+ Categories/) + newest name visible. No delete in UI → leaves Faker rows; total-relative assertion stays stable.
+- **Brands DONE:** `pages/admin/brand.page.ts` + `tests/admin/brand.spec.ts`. 1 test green (toggle listing status).
+  - Real selectors: toggle btn `.toggle-status` (plan guessed wrong), row `tr[data-brand-id]`, badge `.status-cell .tv-badge`.
+  - Toggle has NO confirm dialog → fetch + `location.reload()`. Test self-restores (toggle then toggle back) → zero net DB change, repeatable.
+  - Add-brand (file upload) skipped for now; toggle covers the module without needing a fixture image.
+- **Products DONE:** `pages/admin/product.page.ts` + `tests/admin/product.spec.ts` (3 tests: list loads, search matches, search no-match empty state). Wired into admin fixture as `productPage`.
+  - UI block/unblock is NOT testable: `products.ejs` JS references `.block-button`/`.unblock-button` classes never rendered in rows (orphaned). Only Edit + offer controls render. `/blockProduct` `/unblockProduct` routes exist → API-phase candidate.
+  - List paginated (8/page, 25 total). Search is GET form (`?search=`). "Classic" matches all seed products; empty-state row has no `data-product-id` so count=0 on no-match.
+  - Add deferred (multi-image upload).
+- **Coupons DONE:** `pages/admin/coupon.page.ts` + `tests/admin/coupon.spec.ts` (serial: add → delete, self-cleaning). Fixture `couponPage`.
+  - Validation gotchas: name ALPHANUMERIC only (no spaces!); offerPrice<minPrice<maxPrice (100/500/1000); dates today-or-future ISO. Inline `.error-message`, NOT SweetAlert, blocks invalid submit.
+  - Add AJAX → "Success!" SweetAlert (2s timer) → reload. Delete → confirm "Delete" → AJAX GET deletecoupon → "Deleted!" + OK → reload.
+  - COUNT gotcha: 2 badges/row (code `.badge.bg-light` + status badge) → count code badge only.
+- **Customers DONE:** `pages/admin/customers.page.ts` + `tests/admin/customers.spec.ts` (block→unblock, self-restoring). Fixture `customersPage`.
+  - PROTECTED: vaisakhnofficial@gmail.com (= user.json). TARGET throwaway: svvasudevam@gmail.com. Spec hard-guards TARGET != PROTECTED.
+  - Block/unblock: `.blockCustomer`/`.unblockCustomer` → SweetAlert confirm ("Yes, block/unblock user") → fetch → success dialog OK → reload. Status badge `.tv-badge` Active/Blocked. Routes use `admincheckSession` (authz quirk → Phase 7).
+  - NOTE: standalone node scripts on admin.json can 302 to login if stale; `admin` project refreshes via setup-admin.
+- NEXT (per plan): Dashboard → Orders.
+- Full suite: 32 passed (user + admin + cross-browser smoke).
+
+
+## PHASE 6 COMPLETE (Admin Module)
+Full suite: 34 passed, 4 skipped (data-dependent: order status advance, return approval — skip-with-reason when nothing to process). 38 tests total user+admin.
+Built (exceeded planned scope): admin-login POM + admin.setup → admin.json. Dedicated `fixtures/admin.fixture.ts` injecting all admin POMs. Admin POMs: category, brand, product, coupon, customers, orders, returns, dashboard. Specs under tests/admin/ run via `admin` project (storageState admin.json, dep setup-admin).
+Coverage: Categories (add), Brands (toggle+restore), Products (list, search +/-), Coupons (add+delete serial), Customers (block/unblock a throwaway, PROTECTED_USER guard so never block user-suite account), Orders (list, filter, status-advance skip-if-none), Returns (list, approve skip-if-none), Dashboard (stats view).
+Key fixes: address POM — ONE locator for cards (getByTitle('Delete Address')) used by both assertion and count (was mismatched .vault-card vs getByTitle → off-by-one + strict-mode); delete uses .first(). Order status + return approve use test.skip(!condition, reason) for empty data.
+Config: setup-user, setup-admin, chromium (user, testIgnore tests/admin/), admin (tests/admin/*.spec.ts), firefox/webkit @smoke.
+
+## NEXT: Phase 7 — API testing (APIRequestContext)
+Targets: /addToCart boundary matrix (qty 1,4 pass; 5,0 → 400; min(stock,4) low-stock edge); missing-auth (/addWishlist, /removeFromWishlist, /dashboard-canceled-data — call without session, assert should reject → likely documentable bug); admin authz (admincheckSession vs adminIsLogin quirk). Need to reuse session cookie via request context / storageState.

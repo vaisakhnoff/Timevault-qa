@@ -25,7 +25,7 @@ export class AddressPage {
 constructor(page :Page){
 
     this.page = page,
-    this.addressCards = page.locator('.vault-card');
+this.addressCards = page.getByTitle('Delete Address');  
     this.addNewButton =page.getByRole('link', { name: /Add New Address/ });
     this.nameInput = page.locator('#name');
     this.addressType = page.locator("#addressType");
@@ -80,7 +80,7 @@ async deleteFirstAddress():Promise<void>{
 
     if(previousCount ===0)return;
 
-    await this.deleteButton.click();
+    await this.deleteButton.first().click();
 
     await this.dialogBUtton.click();
     

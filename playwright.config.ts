@@ -43,18 +43,37 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
 
+    // Setup projects — each logs in a role once and saves its storageState.
     {
-    name: 'setup',
-    testMatch: /.*\.setup\.ts/,   // only runs *.setup.ts files
-  },
+      name: 'setup-user',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      name: 'setup-admin',
+      testMatch: /admin\.setup\.ts/,
+    },
 
+    // Main user suite: authenticated as a normal user. Excludes admin specs.
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'],
-         storageState: 'playwright/.auth/user.json',
-       },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /tests\/admin\//,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user'],
+    },
 
-       dependencies: ['setup'],
+    // Admin suite: authenticated as admin, only runs specs under tests/admin/.
+    {
+      name: 'admin',
+      testMatch: /tests\/admin\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['setup-admin'],
     },
 
     // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.
