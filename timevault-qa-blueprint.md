@@ -735,7 +735,7 @@ timevault-qa/
 | `AdminProductsPage` | `products.ejs` | getProducts(), blockProduct(), unblockProduct(), addOffer(), removeOffer() |
 | `AdminProductAddPage` | `product-add.ejs` | fillProductForm(), uploadImages(), submitProduct() |
 | `AdminCouponsPage` | `coupon.ejs` | getCoupons(), addCoupon(), editCoupon(), deleteCoupon() |
-| `AdminOrdersPage` | `orderManagement.ejs` | getOrders(), viewOrder(), updateStatus(), searchOrder(), filterByStatus() |
+| `ordersPage` | `orderManagement.ejs` | getOrders(), viewOrder(), updateStatus(), searchOrder(), filterByStatus() |
 | `AdminReturnRequestsPage` | `returnRequests.ejs` | getRequests(), approveReturn(), declineReturn() |
 | `AdminSalesReportPage` | `sales-report.ejs` | filterReport(), downloadReport() |
 
