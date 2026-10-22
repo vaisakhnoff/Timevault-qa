@@ -5,7 +5,6 @@ import { CouponData } from '../../types';
 test.describe.configure({ mode: 'serial' });
 
 test.describe('TimeVault Admin Coupon Tests', () => {
-
   const code = `TEST${faker.string.alpha({ length: 6, casing: 'upper' })}`;
 
   function isoDate(offsetDays: number): string {
@@ -14,7 +13,6 @@ test.describe('TimeVault Admin Coupon Tests', () => {
     return d.toISOString().split('T')[0];
   }
 
-  
   const data: CouponData = {
     name: 'TestCoupon' + code,
     code,

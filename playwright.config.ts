@@ -42,7 +42,6 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-
     // Setup projects — each logs in a role once and saves its storageState.
     {
       name: 'setup-user',

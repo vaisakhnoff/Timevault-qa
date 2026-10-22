@@ -27,9 +27,10 @@ export class CouponPage {
     this.minPrice = page.locator('#minimum-price');
     this.maxPrice = page.locator('#max-price');
     this.addButton = page.locator('#coupon-form button[type="submit"]');
-    
-    
-    this.couponRows = page.locator('table.table tbody tr').filter({ has: page.locator('.badge.bg-light') });
+
+    this.couponRows = page
+      .locator('table.table tbody tr')
+      .filter({ has: page.locator('.badge.bg-light') });
     this.successDialog = page.getByText('Success!');
     this.deletedDialog = page.getByText('Deleted!');
     this.confirmDeleteButton = page.getByRole('button', { name: 'Delete' });
@@ -43,7 +44,7 @@ export class CouponPage {
   async getCouponCount(): Promise<number> {
     return this.page.locator('table.table tbody tr td .badge.bg-light').count();
   }
-// .badge.badge-success
+  // .badge.badge-success
 
   rowByCode(code: string): Locator {
     return this.page.locator('table.table tbody tr').filter({ hasText: code });

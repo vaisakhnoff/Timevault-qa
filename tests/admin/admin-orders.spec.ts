@@ -1,8 +1,6 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 
-
 test.describe.skip('TimeVault Admin Order Tests', () => {
-
   test('@regression orders list loads with orders or empty state', async ({ ordersPage }) => {
     await ordersPage.goto();
 
@@ -24,8 +22,6 @@ test.describe.skip('TimeVault Admin Order Tests', () => {
     await expect(page).toHaveURL(/status=Pending/);
 
     await expect(ordersPage.statusFilter).toHaveValue('Pending');
-
-
   });
 
   test('@regression admin can advance an order status', async ({ ordersPage, page }) => {
@@ -37,6 +33,5 @@ test.describe.skip('TimeVault Admin Order Tests', () => {
     await ordersPage.updateStatus(nextStatus);
 
     await expect(page.getByText(nextStatus, { exact: true }).first()).toBeVisible();
-
-  })
+  });
 });

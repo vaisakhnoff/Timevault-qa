@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+
+  "include": ["config", "pages", "fixtures", "api", "types", "tests", "playwright.config.ts"],
+  "exclude": ["node_modules"]
+}
