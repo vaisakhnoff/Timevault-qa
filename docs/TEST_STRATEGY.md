@@ -1,6 +1,6 @@
 # TimeVault QA — Test Strategy
 
-How we test TimeVault. The [Test Plan](TEST_PLAN.md) says *what* is in and out of scope; this document is the rulebook for *how* testing is done: levels, techniques, tools, data, environments, criteria, and defect handling.
+How we test TimeVault. The [Test Plan](TEST_PLAN.md) says _what_ is in and out of scope; this document is the rulebook for _how_ testing is done: levels, techniques, tools, data, environments, criteria, and defect handling.
 
 Related documents: [TEST_PLAN.md](TEST_PLAN.md) · [TEST_SCENARIOS.md](TEST_SCENARIOS.md) · [TEST_CASES.md](TEST_CASES.md) · [BUG_REPORTS.md](BUG_REPORTS.md)
 
@@ -17,11 +17,11 @@ TimeVault is a server-rendered e-commerce app: Node.js, Express, EJS views, Mong
 
 ## 3. Test levels
 
-| Level | What it covers | Why | Target share |
-|-------|----------------|-----|--------------|
-| **API / integration** | JSON endpoints called directly with `APIRequestContext` (status codes, response bodies, business rules, authorization) | Fast, deterministic, tests the authoritative server-side rules without UI fragility | ~50% |
-| **UI (page level)** | One page or module at a time through the browser: rendering, forms, navigation, validation messages | Confirms what the user actually sees and can do | ~35% |
-| **End-to-end** | Multi-step journeys across modules (browse → cart → checkout → order → cancel/refund; admin product lifecycle) | Confirms modules work together; expensive, so only critical flows | ~15% |
+| Level                 | What it covers                                                                                                         | Why                                                                                 | Target share |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------ |
+| **API / integration** | JSON endpoints called directly with `APIRequestContext` (status codes, response bodies, business rules, authorization) | Fast, deterministic, tests the authoritative server-side rules without UI fragility | ~50%         |
+| **UI (page level)**   | One page or module at a time through the browser: rendering, forms, navigation, validation messages                    | Confirms what the user actually sees and can do                                     | ~35%         |
+| **End-to-end**        | Multi-step journeys across modules (browse → cart → checkout → order → cancel/refund; admin product lifecycle)         | Confirms modules work together; expensive, so only critical flows                   | ~15%         |
 
 The shares are **design targets taken from the blueprint, not measured results**. Actual counts are reported only from real runs. The API layer is currently the smallest relative to target and is being expanded.
 
@@ -29,34 +29,34 @@ The shares are **design targets taken from the blueprint, not measured results**
 
 ## 4. Test types and techniques
 
-| Type / technique | Where it applies in TimeVault |
-|------------------|-------------------------------|
-| Functional | Every module; each feature behaves per its rules |
-| Smoke | Critical path: login, browse, add to cart, checkout (COD), order list, admin login/dashboard. Target under 5 minutes |
-| Regression | Full automated suite after any change |
-| Sanity | Focused re-check of one module after a fix (for example cart fix → cart + checkout + orders) |
-| Negative | Wrong password, blocked user, expired coupon, invalid IDs, malformed bodies |
-| Boundary Value Analysis | Cart quantity `min(stock, 4)` (0, 1, 4, 5, and the stock-below-4 edge); coupon `offer < minimum < maximum`; price filter; pincode/phone length |
-| Equivalence Partitioning | Valid/invalid classes for email, password, price range, OTP |
-| Authorization | Anonymous and wrong-role access to protected user and admin endpoints |
-| Session | Login/logout, session destruction, blocked-mid-session behaviour |
-| Integration | Cart → checkout → order → stock; cancel/return → wallet refund; coupon → order total |
-| Cross-browser | Chromium full suite; Firefox/WebKit smoke subset only |
+| Type / technique         | Where it applies in TimeVault                                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Functional               | Every module; each feature behaves per its rules                                                                                               |
+| Smoke                    | Critical path: login, browse, add to cart, checkout (COD), order list, admin login/dashboard. Target under 5 minutes                           |
+| Regression               | Full automated suite after any change                                                                                                          |
+| Sanity                   | Focused re-check of one module after a fix (for example cart fix → cart + checkout + orders)                                                   |
+| Negative                 | Wrong password, blocked user, expired coupon, invalid IDs, malformed bodies                                                                    |
+| Boundary Value Analysis  | Cart quantity `min(stock, 4)` (0, 1, 4, 5, and the stock-below-4 edge); coupon `offer < minimum < maximum`; price filter; pincode/phone length |
+| Equivalence Partitioning | Valid/invalid classes for email, password, price range, OTP                                                                                    |
+| Authorization            | Anonymous and wrong-role access to protected user and admin endpoints                                                                          |
+| Session                  | Login/logout, session destruction, blocked-mid-session behaviour                                                                               |
+| Integration              | Cart → checkout → order → stock; cancel/return → wallet refund; coupon → order total                                                           |
+| Cross-browser            | Chromium full suite; Firefox/WebKit smoke subset only                                                                                          |
 
 ## 5. Tools and rationale
 
-| Tool | Purpose | Why this and not an alternative |
-|------|---------|--------------------------------|
-| Playwright Test | UI + API runner | One tool for both layers; auto-waiting, fixtures, traces, projects |
-| TypeScript (strict) | Test code | Catches mistakes (for example a missing `await`) before runtime |
-| `APIRequestContext` | API testing | Built in; no need for Axios |
-| `@faker-js/faker` | Dynamic test data | Unique values avoid duplicate-record conflicts |
-| `dotenv` | Configuration | Keeps credentials and URLs out of the code |
-| Allure | Primary report | Steps, severities, history (Phase 9) |
-| Playwright HTML report | Secondary report | Zero-config, local debugging |
-| ESLint + Prettier | Code quality | Consistent, reviewable code |
-| Git + GitHub | Source control | `main` ← `develop` ← `feature/*` with pull requests |
-| Jenkins | CI/CD | Pipeline as code (Phase 10) |
+| Tool                   | Purpose           | Why this and not an alternative                                    |
+| ---------------------- | ----------------- | ------------------------------------------------------------------ |
+| Playwright Test        | UI + API runner   | One tool for both layers; auto-waiting, fixtures, traces, projects |
+| TypeScript (strict)    | Test code         | Catches mistakes (for example a missing `await`) before runtime    |
+| `APIRequestContext`    | API testing       | Built in; no need for Axios                                        |
+| `@faker-js/faker`      | Dynamic test data | Unique values avoid duplicate-record conflicts                     |
+| `dotenv`               | Configuration     | Keeps credentials and URLs out of the code                         |
+| Allure                 | Primary report    | Steps, severities, history (Phase 9)                               |
+| Playwright HTML report | Secondary report  | Zero-config, local debugging                                       |
+| ESLint + Prettier      | Code quality      | Consistent, reviewable code                                        |
+| Git + GitHub           | Source control    | `main` ← `develop` ← `feature/*` with pull requests                |
+| Jenkins                | CI/CD             | Pipeline as code (Phase 10)                                        |
 
 Deliberately not used: Zod/Ajv (too few endpoints to justify), Docker (not needed yet), Husky (solo project). Tools are added only with a clear reason.
 
@@ -67,14 +67,14 @@ Deliberately not used: Zod/Ajv (too few endpoints to justify), Docker (not neede
 - **API clients** — one class per resource (`CartApi`, `WishlistApi`, `AdminApi`); endpoints are typed methods.
 - **Assertions** — web-first assertions (`expect(locator)…`) that auto-wait; no fixed sleeps.
 - **Locators** — prefer role, label, title and text; use stable IDs where the markup has no accessible name; avoid positional CSS and XPath.
-- **Assertions vs page objects** — page objects expose locators and actions; the *test* decides what to assert.
+- **Assertions vs page objects** — page objects expose locators and actions; the _test_ decides what to assert.
 
 ## 7. Test environments
 
-| Environment | URL | Use |
-|-------------|-----|-----|
-| Local (primary) | `http://localhost:3000` | Day-to-day development and regression; fast and stable |
-| Deployed (Render free tier) | set in `BASE_URL` | Demonstration only; slow cold starts, **ephemeral filesystem** so uploaded images disappear on restart |
+| Environment                 | URL                     | Use                                                                                                    |
+| --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| Local (primary)             | `http://localhost:3000` | Day-to-day development and regression; fast and stable                                                 |
+| Deployed (Render free tier) | set in `BASE_URL`       | Demonstration only; slow cold starts, **ephemeral filesystem** so uploaded images disappear on restart |
 
 The environment is chosen by a single `BASE_URL` value in `.env`. Tests never hardcode hosts. Runtime: Node.js LTS, Chromium primary, Firefox/WebKit for smoke.
 
@@ -90,12 +90,12 @@ The environment is chosen by a single `BASE_URL` value in `.env`. Tests never ha
 
 ## 9. Authentication strategy
 
-| Need | Approach |
-|------|----------|
-| Authenticated user tests | A setup project logs in once and saves `storageState` (`user.json`); the user project reuses it |
-| Authenticated admin tests | A second setup project saves `admin.json`; the admin project reuses it |
-| Logged-out UI tests | Override with an empty `storageState` for that file |
-| Authorization (anonymous) API tests | A request context created with an **explicitly empty** `storageState` |
+| Need                                | Approach                                                                                        |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Authenticated user tests            | A setup project logs in once and saves `storageState` (`user.json`); the user project reuses it |
+| Authenticated admin tests           | A second setup project saves `admin.json`; the admin project reuses it                          |
+| Logged-out UI tests                 | Override with an empty `storageState` for that file                                             |
+| Authorization (anonymous) API tests | A request context created with an **explicitly empty** `storageState`                           |
 
 TimeVault authenticates with a **session cookie**, not a token, so the reusable artifact is the cookie in `storageState`. An anonymous context must be created with an empty state; otherwise it can silently inherit the project's session and produce false results (this happened once and is why the rule exists).
 
@@ -116,11 +116,13 @@ TimeVault uses one shared database and tests share one user account, so:
 ## 12. Entry and exit criteria
 
 **Entry (testing can start):**
+
 - Application running and reachable at `BASE_URL`; database seeded.
 - Valid user and admin credentials in `.env`.
 - Dependencies and Playwright browsers installed; project type-checks and lints.
 
 **Exit (a cycle is complete):**
+
 - All P0 scenarios automated and passing.
 - No open Critical or High defect without a documented decision.
 - Smoke suite under 5 minutes.
@@ -129,16 +131,16 @@ TimeVault uses one shared database and tests share one user account, so:
 
 ## 13. Defect management
 
-| Severity | Meaning | Example |
-|----------|---------|---------|
-| Critical | Data loss, security breach, system unusable | Payment/order corruption |
-| High | Major feature broken or access control missing | Admin endpoint open to anonymous callers (BUG-001) |
-| Medium | Feature partly broken, workaround exists | Wrong total in an edge case |
-| Low | Cosmetic or minor | Typo, spacing |
+| Severity | Meaning                                        | Example                                            |
+| -------- | ---------------------------------------------- | -------------------------------------------------- |
+| Critical | Data loss, security breach, system unusable    | Payment/order corruption                           |
+| High     | Major feature broken or access control missing | Admin endpoint open to anonymous callers (BUG-001) |
+| Medium   | Feature partly broken, workaround exists       | Wrong total in an edge case                        |
+| Low      | Cosmetic or minor                              | Typo, spacing                                      |
 
 - Every defect is written up in `BUG_REPORTS.md` with steps, expected vs actual, evidence and impact.
 - Only **verified** defects are reported. Before reporting, the test harness is checked first (for example the leaked-session false alarm).
-- A confirmed, still-open defect is kept in automation with `test.fail(true, 'BUG-ID …')`. The assertion keeps stating the *correct* behaviour; the test is expected to fail, CI stays green, and Playwright flags the test as soon as the bug is fixed so the marker can be removed. Asserting the buggy behaviour is not allowed.
+- A confirmed, still-open defect is kept in automation with `test.fail(true, 'BUG-ID …')`. The assertion keeps stating the _correct_ behaviour; the test is expected to fail, CI stays green, and Playwright flags the test as soon as the bug is fixed so the marker can be removed. Asserting the buggy behaviour is not allowed.
 
 ## 14. Failure, retry and flaky-test policy
 

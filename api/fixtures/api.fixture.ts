@@ -16,6 +16,8 @@ export const test = base.extend<ApiFixtures>({
   cartApi: async ({ request }, use) => {
     await use(new CartApi(request));
   },
+  // Playwright requires destructuring syntax for fixture args, even when none are used.
+  // eslint-disable-next-line no-empty-pattern
   anonContext: async ({}, use) => {
     const ctx = await createAnonymousContext();
     await use(ctx);

@@ -1,5 +1,4 @@
 import { test, expect } from '../../fixtures/base.fixture';
-import { CartPage } from '../../pages/user/cart.page';
 
 test.describe.configure({ mode: 'serial' });
 

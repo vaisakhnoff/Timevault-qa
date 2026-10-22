@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 import { Address } from '../../types';
 
 export class AddressPage {
@@ -19,7 +19,8 @@ export class AddressPage {
   readonly dialogBUtton: Locator;
 
   constructor(page: Page) {
-    ((this.page = page), (this.addressCards = page.getByTitle('Delete Address')));
+    this.page = page;
+    this.addressCards = page.getByTitle('Delete Address');
     this.addNewButton = page.getByRole('link', { name: /Add New Address/ });
     this.nameInput = page.locator('#name');
     this.addressType = page.locator('#addressType');

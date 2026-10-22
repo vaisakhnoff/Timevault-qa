@@ -1,6 +1,5 @@
 import { test, expect } from '../../api/fixtures/api.fixture';
 import { PRODUCTS, INVALID_PRODUCT_ID } from '../../api/data/api-test-data';
-import { time } from 'node:console';
 
 const TITAN = PRODUCTS.titan;
 
@@ -23,7 +22,7 @@ test.describe('Cart API - boundry @api', () => {
 
     expect(res.status()).toBe(400);
 
-    const body = await res.json();
+    const body = (await res.json()) as { success: boolean; message: string };
     expect(body.success).toBe(false);
     expect(body.message).toContain('Maximum');
   });

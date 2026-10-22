@@ -84,17 +84,17 @@ The project aims to:
 
 ### Out of Scope
 
-| Area | Reason |
-|------|--------|
-| Full Google OAuth flow | Requires real Google credentials and is impractical for CI automation. |
-| Real Razorpay payment flow | Depends on an external payment system / iframe and is better handled through controlled / manual testing. |
-| Email delivery verification | Requires mailbox access or a mail-trap service; documented as manual. |
-| Reading OTP directly from email | Requires external mailbox access; automation will use a controlled test approach instead. |
-| PDF / Excel content validation | File download can be verified, but detailed document-content validation remains manual. |
-| Performance / load testing | Not part of the portfolio scope and requires a dedicated performance-testing setup. |
-| Mobile application testing | TimeVault is a web application; there is no separate mobile app. |
-| Database migration testing | No database migration mechanism is implemented in the application. |
-| Banner management testing | Banner schema exists, but the corresponding admin CRUD functionality is not implemented. |
+| Area                            | Reason                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Full Google OAuth flow          | Requires real Google credentials and is impractical for CI automation.                                    |
+| Real Razorpay payment flow      | Depends on an external payment system / iframe and is better handled through controlled / manual testing. |
+| Email delivery verification     | Requires mailbox access or a mail-trap service; documented as manual.                                     |
+| Reading OTP directly from email | Requires external mailbox access; automation will use a controlled test approach instead.                 |
+| PDF / Excel content validation  | File download can be verified, but detailed document-content validation remains manual.                   |
+| Performance / load testing      | Not part of the portfolio scope and requires a dedicated performance-testing setup.                       |
+| Mobile application testing      | TimeVault is a web application; there is no separate mobile app.                                          |
+| Database migration testing      | No database migration mechanism is implemented in the application.                                        |
+| Banner management testing       | Banner schema exists, but the corresponding admin CRUD functionality is not implemented.                  |
 
 ## 3. Test Approach
 
@@ -156,16 +156,16 @@ CI/CD will eventually execute the Playwright suites through Jenkins and publish 
 
 These are risks to the testing project itself, not application defects.
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Test data changes or conflicts | Tests may become flaky or fail unexpectedly. | Use controlled test data, Faker-generated unique data, and test isolation. |
-| Application unavailable during execution | The entire automation suite may fail. | Add environment / health checks and document application startup requirements. |
-| Unstable UI selectors | Tests may break after small UI changes. | Prefer role / text-based locators and use stable selectors where available. |
-| Authentication / OTP dependencies | Login-related automation may become blocked. | Use controlled accounts and reusable authentication state where appropriate. |
-| External payment dependency | Razorpay automation may be unreliable or impossible in CI. | Focus automated payment coverage on COD / Wallet and document Razorpay separately. |
-| CI/CD configuration issues | Tests may pass locally but fail in Jenkins. | Build the Jenkins pipeline incrementally and validate each stage separately. |
-| Scope creep | The project may become too large to complete. | Maintain MVP → SHOULD HAVE → ADVANCED priorities. |
-| Flaky tests | False failures reduce trust in automation. | Investigate root causes, isolate tests, use proper waits and controlled retries. |
+| Risk                                     | Impact                                                     | Mitigation                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Test data changes or conflicts           | Tests may become flaky or fail unexpectedly.               | Use controlled test data, Faker-generated unique data, and test isolation.         |
+| Application unavailable during execution | The entire automation suite may fail.                      | Add environment / health checks and document application startup requirements.     |
+| Unstable UI selectors                    | Tests may break after small UI changes.                    | Prefer role / text-based locators and use stable selectors where available.        |
+| Authentication / OTP dependencies        | Login-related automation may become blocked.               | Use controlled accounts and reusable authentication state where appropriate.       |
+| External payment dependency              | Razorpay automation may be unreliable or impossible in CI. | Focus automated payment coverage on COD / Wallet and document Razorpay separately. |
+| CI/CD configuration issues               | Tests may pass locally but fail in Jenkins.                | Build the Jenkins pipeline incrementally and validate each stage separately.       |
+| Scope creep                              | The project may become too large to complete.              | Maintain MVP → SHOULD HAVE → ADVANCED priorities.                                  |
+| Flaky tests                              | False failures reduce trust in automation.                 | Investigate root causes, isolate tests, use proper waits and controlled retries.   |
 
 ## 5. Assumptions
 
