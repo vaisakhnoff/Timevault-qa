@@ -1,8 +1,6 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 
-
 test.describe('TimeVault Admin Product Tests', () => {
-
   test('@regression product list loads with products', async ({ productPage }) => {
     await productPage.goto();
 

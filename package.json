@@ -9,7 +9,10 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "qa",
@@ -24,9 +27,11 @@
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.63.0",
-    "@types/node": "^26.6.4"
+    "@types/node": "^26.6.4",
+    "prettier": "^3.9.10"
   },
   "dependencies": {
-    "dotenv": "^18.0.6"
+    "dotenv": "^18.0.6",
+    "typescript": "^7.0.2"
   }
 }

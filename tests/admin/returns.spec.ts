@@ -1,9 +1,9 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 
-
 test.describe('TimeVault Admin Return Request Tests', () => {
-
-  test('@regression return requests page loads with requests or empty state', async ({ returnsPage }) => {
+  test('@regression return requests page loads with requests or empty state', async ({
+    returnsPage,
+  }) => {
     await returnsPage.goto();
 
     await expect(returnsPage.pageTitle).toBeVisible();
@@ -19,7 +19,6 @@ test.describe('TimeVault Admin Return Request Tests', () => {
   test('@regression admin can approve a return request', async ({ returnsPage }) => {
     await returnsPage.goto();
 
-    
     const before = await returnsPage.getRequestCount();
     test.skip(before === 0, 'No pending return request to process.');
 

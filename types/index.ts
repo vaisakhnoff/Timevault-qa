@@ -1,4 +1,3 @@
-
 export interface Product {
   productName: string;
   description: string;
@@ -11,7 +10,6 @@ export interface Product {
   isBlocked: boolean;
   status: string;
 }
-
 
 export interface Credentials {
   email: string;
@@ -32,9 +30,9 @@ export interface Address {
 export type CouponData = {
   name: string;
   code: string;
-  startDate: string;   
-  endDate: string;     
-  offerPrice: number;  
-  minPrice: number;    
+  startDate: string;
+  endDate: string;
+  offerPrice: number;
+  minPrice: number;
   maxPrice: number;
 };

@@ -1,9 +1,7 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 import { faker } from '@faker-js/faker';
 
-
 test.describe('TimeVault Admin Category Tests', () => {
-
   test('@regression admin can add a new category', async ({ categoryPage }) => {
     await categoryPage.goto();
 
