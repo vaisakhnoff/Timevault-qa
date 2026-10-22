@@ -1,5 +1,6 @@
-import { test, expect } from '../../api/fixtures/api.fixture';
-import { PRODUCTS } from '../../api/data/api-test-data';
+import { test, expect } from '../../fixtures/api.fixture';
+import { PRODUCTS,INVALID_PRODUCT_ID} from '../../data/api-test-data';
+
 
 const TITAN = PRODUCTS.titan;
 
