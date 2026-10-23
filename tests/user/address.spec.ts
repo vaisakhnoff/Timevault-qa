@@ -1,17 +1,5 @@
+import { generateAddress } from '../../data/generators';
 import { test, expect } from '../../fixtures/base.fixture';
-import { faker } from '@faker-js/faker';
-import { Address } from '../../types';
-
-const makeAddress = (): Address => ({
-  name: faker.person.fullName(),
-  addressType: 'Home',
-  city: faker.location.city(),
-  landMark: faker.location.street(),
-  state: faker.location.state(),
-  pincode: faker.string.numeric(6),
-  phone_no: faker.string.numeric(10),
-  altPhone_no: faker.string.numeric(10),
-});
 
 test.describe('TimeVault Address Tests', () => {
   test.describe.configure({ mode: 'serial' });
@@ -29,7 +17,7 @@ test.describe('TimeVault Address Tests', () => {
     await addressPage.goto();
     const before = await addressPage.getAddressCount();
 
-    await addressPage.addAddress(makeAddress());
+    await addressPage.addAddress(generateAddress());
 
     await expect(addressPage.addressCards).toHaveCount(before + 1);
   });
