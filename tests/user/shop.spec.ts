@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/base.fixture';
-import { isSortedAscending } from '../../utils/helpers';
+import { isSortedAscending, isSortedDescending } from '../../utils/helpers';
 
 test.describe('TimeVault Shop Tests', () => {
   test('Shop page should display products', async ({ shopPage }) => {
@@ -42,7 +42,15 @@ test.describe('TimeVault Shop Tests', () => {
     const prices = await shopPage.getCurrentPrices();
 
     expect(isSortedAscending(prices), `Prices were: ${prices.join(', ')}`).toBe(true);
+  });
 
+  test('@regression sort by price high to low orders products descending', async ({ shopPage }) => {
+    await shopPage.goto();
+    await shopPage.sortBy('price_desc');
+    await expect(shopPage.page).toHaveURL(/sort=price_desc/);
 
+    const prices = await shopPage.getCurrentPrices();
+
+    expect(isSortedDescending(prices), `Prices were: ${prices.join(', ')}`).toBe(true);
   });
 });
