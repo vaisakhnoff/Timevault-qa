@@ -2,8 +2,6 @@ import { faker } from '@faker-js/faker';
 import { Address, CouponData, NewUserData } from '../types';
 import { dateFromToday } from '../utils/helpers';
 
-
-
 export function generateAddress(): Address {
   return {
     name: faker.person.fullName(),

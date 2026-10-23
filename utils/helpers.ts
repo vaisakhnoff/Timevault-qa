@@ -1,11 +1,12 @@
+export function parsePrice(text: string): number {
+  const numericText = text.replace(/[^\d.-]/g, '');
+  const price = Number(numericText);
 
-export function parsePrice(text :string): number {
-      
-    const numericText = text.replace(/[^\d.-]/g, '');
-      const price = Number(numericText);
+  if (Number.isNaN(price)) {
+    throw new Error(`Could not parse price from "${text}"`);
+  }
 
-      return price
-
+  return price;
 }
 
 export function isSortedAscending(values: number[]): boolean {
@@ -17,7 +18,10 @@ export function isSortedDescending(values: number[]): boolean {
 }
 
 export function dateFromToday(offsetDays: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().split('T')[0];
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
