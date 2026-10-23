@@ -1,5 +1,14 @@
 import { faker } from '@faker-js/faker';
-import { Address, CouponData, NewUserData } from '../types/index';
+import { Address, CouponData, NewUserData } from '../types';
+
+function isoDate(offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 export function generateAddress(): Address {
   return {
@@ -15,10 +24,27 @@ export function generateAddress(): Address {
 }
 
 export function generateCoupon(overrides: Partial<CouponData> = {}): CouponData {
-  // build the same data the coupon spec builds today,
-  // then return { ...defaults, ...overrides }
+  const code = `TEST${faker.string.alpha({ length: 6, casing: 'upper' })}`;
+
+  const defaults: CouponData = {
+    name: `TestCoupon${code}`,
+    code,
+    startDate: isoDate(0),
+    endDate: isoDate(30),
+    offerPrice: 100,
+    minPrice: 500,
+    maxPrice: 1000,
+  };
+
+  return { ...defaults, ...overrides };
 }
 
 export function generateUser(): NewUserData {
-  // firstName, lastName, email, phoneNumber, password
+  return {
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    email: faker.internet.email(),
+    phoneNumber: faker.string.numeric(10),
+    password: 'Test@12345',
+  };
 }
