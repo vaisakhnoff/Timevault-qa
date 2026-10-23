@@ -4,7 +4,6 @@ import { createAnonymousContext } from '../api/request-context';
 import { WishlistApi } from '../api/wishlist.api';
 import { AdminApi } from '../api/admin.api';
 
-
 type ApiFixtures = {
   cartApi: CartApi;
   anonContext: APIRequestContext;
