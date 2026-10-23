@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { parsePrice } from '../../utils/helpers';
 
 export class ShopPage {
   readonly page: Page;
@@ -55,6 +56,6 @@ export class ShopPage {
   async getCurrentPrices(): Promise<number[]> {
     const texts = await this.currentPrices.allInnerTexts();
 
-    return texts.map((t) => parseInt(t.replace(/[₹,\s]/g, ''), 10));
+    return texts.map(parsePrice);
   }
 }
