@@ -18,7 +18,9 @@
     "types",
     "tests",
     "playwright.config.ts",
-    "data"
+    "data",
+    "utils",
+    "components"
   ],
   "exclude": ["node_modules"]
 }
