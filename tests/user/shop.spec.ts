@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures/base.fixture';
+import { ShopPage } from '../../pages/user/shop.page';
 import { isSortedAscending, isSortedDescending } from '../../utils/helpers';
 
 test.describe('TimeVault Shop Tests', () => {
@@ -52,5 +53,23 @@ test.describe('TimeVault Shop Tests', () => {
     const prices = await shopPage.getCurrentPrices();
 
     expect(isSortedDescending(prices), `Prices were: ${prices.join(', ')}`).toBe(true);
+  });
+
+  test('@regression pagination changes the displayed products', async ({ shopPage }) => {
+    await shopPage.goto();
+
+    const pageOneProductNames = await shopPage.getProductNames();
+
+    expect(pageOneProductNames.length).toBeGreaterThan(0);
+
+    await shopPage.pagination.goToPage(2);
+
+    await expect(shopPage.pagination.activePage).toHaveText('2');
+
+    const pageTwoProductNames = await shopPage.getProductNames();
+
+    expect(pageTwoProductNames.length).toBeGreaterThan(0);
+
+    expect(pageTwoProductNames[0]).not.toBe(pageOneProductNames[0]);
   });
 });

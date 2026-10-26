@@ -1,8 +1,10 @@
 import { Page, Locator } from '@playwright/test';
 import { parsePrice } from '../../utils/helpers';
+import { PaginationComponent } from '../../components/pagination.component';
 
 export class ShopPage {
   readonly page: Page;
+  readonly pagination: PaginationComponent;
 
   readonly productCards: Locator;
   readonly productCount: Locator;
@@ -15,6 +17,8 @@ export class ShopPage {
 
   constructor(page: Page) {
     this.page = page;
+
+    this.pagination = new PaginationComponent(page.locator('#paginationContainer'));
 
     this.productCards = page.locator('.vault-product-card');
     this.productCount = page.locator('#productCount');
