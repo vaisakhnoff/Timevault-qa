@@ -71,4 +71,16 @@ test.describe('TimeVault Shop Tests', () => {
 
     expect(pageTwoProductNames[0]).not.toBe(pageOneProductNames[0]);
   });
+
+  test('@regression pagination next and previous controls change pages', async ({ shopPage }) => {
+    await shopPage.goto();
+
+    await expect(shopPage.pagination.activePage).toHaveText('1');
+
+    await shopPage.pagination.next();
+    await expect(shopPage.pagination.activePage).toHaveText('2');
+
+    await shopPage.pagination.previous();
+    await expect(shopPage.pagination.activePage).toHaveText('1');
+  });
 });
