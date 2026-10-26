@@ -59,8 +59,11 @@ export class OrdersPage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
-  async getNextStatus(): Promise<string> {
+  async getNextStatus(): Promise<string | undefined> {
     const options = await this.detailStatusSelect.locator('option').allInnerTexts();
-    return options.map((o) => o.trim()).filter((o) => o && o !== 'Select new status')[0];
+
+    return options
+      .map((option) => option.trim())
+      .find((option) => option && option !== 'Select new status');
   }
 }
