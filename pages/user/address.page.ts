@@ -1,8 +1,10 @@
 import { Page, Locator } from '@playwright/test';
 import { Address } from '../../types';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class AddressPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly addressCards: Locator;
   readonly addNewButton: Locator;
   readonly nameInput: Locator;
@@ -16,10 +18,10 @@ export class AddressPage {
   readonly submitButton: Locator;
   readonly emptyMessage: Locator;
   readonly deleteButton: Locator;
-  readonly dialogBUtton: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.addressCards = page.getByTitle('Delete Address');
     this.addNewButton = page.getByRole('link', { name: /Add New Address/ });
     this.nameInput = page.locator('#name');
@@ -33,7 +35,6 @@ export class AddressPage {
     this.submitButton = page.getByRole('button', { name: /Save|Add/ });
     this.emptyMessage = page.getByRole('heading', { name: 'No Addresses Saved' });
     this.deleteButton = page.locator('.ti-trash');
-    this.dialogBUtton = page.getByRole('button', { name: 'Yes, delete' });
   }
 
   async goto(): Promise<void> {
@@ -69,7 +70,7 @@ export class AddressPage {
 
     await this.deleteButton.first().click();
 
-    await this.dialogBUtton.click();
+    await this.alert.confirm();
 
     await this.page.waitForResponse(
       (res) => res.url().includes('/deleteAddress') && res.request().method() === 'POST',

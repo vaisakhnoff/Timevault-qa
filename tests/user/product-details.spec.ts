@@ -11,8 +11,12 @@ test('@regression adding product to cart shows success confirmation', async ({
 }) => {
   await productDetailsPage.goto('6aad1146c76606074021e7ec');
   await productDetailsPage.setQuantity(2);
-  await productDetailsPage.addToCart();
-  await expect(productDetailsPage.cartSuccessDialog).toBeVisible();
+  await productDetailsPage.addToCartAndLeaveDialogOpen();
+
+  await expect(productDetailsPage.alert.title).toHaveText('Allocated to Bag');
+  await expect(productDetailsPage.alert.message).toBeVisible();
+
+  await productDetailsPage.alert.cancel();
 });
 
 test('@regression @boundary quantity stepper clamps at 4', async ({ productDetailsPage }) => {

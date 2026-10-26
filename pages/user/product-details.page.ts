@@ -1,7 +1,9 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class ProductDetailsPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly productName: Locator;
   readonly currentPrice: Locator;
   readonly quantityInput: Locator;
@@ -14,6 +16,7 @@ export class ProductDetailsPage {
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.productName = page.locator('h1');
     this.currentPrice = page.locator('.col-lg-6 .vault-price-current');
     this.quantityInput = page.locator('#sst');
@@ -39,10 +42,15 @@ export class ProductDetailsPage {
     }
   }
 
-  async addToCart(): Promise<void> {
+  async addToCartAndLeaveDialogOpen(): Promise<void> {
     await this.addToCartButton.click();
-    const continueBtn = this.page.getByRole('button', { name: 'Continue Browsing' });
-    await continueBtn.click();
+    await expect(this.alert.popup).toBeVisible();
+  }
+
+  async addToCart(): Promise<void> {
+    await this.addToCartAndLeaveDialogOpen();
+
+    await this.alert.cancel();
   }
 
   async addToWishlist(): Promise<void> {
