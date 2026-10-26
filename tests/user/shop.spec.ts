@@ -1,65 +1,86 @@
 import { test, expect } from '../../fixtures/base.fixture';
+import { isSortedAscending, isSortedDescending } from '../../utils/helpers';
 
+test.describe('TimeVault Shop Tests', () => {
+  test('Shop page should display products', async ({ shopPage }) => {
+    await shopPage.goto();
 
-test.describe('TimeVault Shop Tests', ()=>{
+    const productCount = await shopPage.getProductCount();
 
-    test('Shop page should display products',async ({shopPage})=>{
+    expect(productCount).toBeGreaterThan(0);
+  });
 
-        await shopPage.goto();
-        
-        const productCount = await shopPage.getProductCount();
+  test('@regression search returns matching products', async ({ shopPage }) => {
+    await shopPage.goto();
 
-        expect(productCount).toBeGreaterThan(0);
-        
-    })
+    await shopPage.search('titan');
 
-    test('@regression search returns matching products' ,async ({shopPage})=>{
+    await expect(shopPage.page).toHaveURL(/search=titan/);
 
-          await shopPage.goto();
+    expect(await shopPage.getProductCount()).toBeGreaterThan(0);
 
-          await shopPage.search('titan');
+    const names = await shopPage.getProductNames();
 
-          await expect(shopPage.page).toHaveURL(/search=titan/);
+    expect(names.some((name) => name.toLowerCase().includes('titan'))).toBeTruthy();
+  });
 
-          expect (await shopPage.getProductCount()).toBeGreaterThan(0);
+  test('@regression search with no matches shows empty state ', async ({ shopPage }) => {
+    await shopPage.goto();
 
-          const names = await shopPage.getProductNames()
+    await shopPage.search('fjfdfjlkdsflk');
 
-          expect (
-            names.some(name => name.toLowerCase().includes('titan'))
-          ).toBeTruthy();
+    await expect(shopPage.noResultMessage).toBeVisible();
 
-    })
+    expect(await shopPage.getProductCount()).toBe(0);
+  });
 
-    test("@regression search with no matches shows empty state ",async ({shopPage})=>{
+  test('@regression sort by price low to high orders products ascending', async ({ shopPage }) => {
+    await shopPage.goto();
+    await shopPage.sortBy('price_asc');
+    await expect(shopPage.page).toHaveURL(/sort=price_asc/);
 
-        await shopPage.goto();
+    const prices = await shopPage.getCurrentPrices();
 
-        await shopPage.search('fjfdfjlkdsflk');
+    expect(isSortedAscending(prices), `Prices were: ${prices.join(', ')}`).toBe(true);
+  });
 
-        await expect (shopPage.noResultMessage).toBeVisible();
+  test('@regression sort by price high to low orders products descending', async ({ shopPage }) => {
+    await shopPage.goto();
+    await shopPage.sortBy('price_desc');
+    await expect(shopPage.page).toHaveURL(/sort=price_desc/);
 
-        expect (await shopPage.getProductCount()).toBe(0)
-    })
-   
+    const prices = await shopPage.getCurrentPrices();
 
-    test("@regression sort by price low to high orders products ascending",async ({shopPage})=>{
+    expect(isSortedDescending(prices), `Prices were: ${prices.join(', ')}`).toBe(true);
+  });
 
-        await shopPage.goto();
-        await shopPage.sortBy('price_asc');
-        await expect(shopPage.page).toHaveURL(/sort=price_asc/);
+  test('@regression pagination changes the displayed products', async ({ shopPage }) => {
+    await shopPage.goto();
 
-        const prices = await shopPage.getCurrentPrices();
-        const sorted = [...prices].sort((a,b)=>a-b);
+    const pageOneProductNames = await shopPage.getProductNames();
 
-        expect(prices).toEqual(sorted);
+    expect(pageOneProductNames.length).toBeGreaterThan(0);
 
+    await shopPage.pagination.goToPage(2);
 
+    await expect(shopPage.pagination.activePage).toHaveText('2');
 
+    const pageTwoProductNames = await shopPage.getProductNames();
 
-    })
+    expect(pageTwoProductNames.length).toBeGreaterThan(0);
 
-    
+    expect(pageTwoProductNames[0]).not.toBe(pageOneProductNames[0]);
+  });
 
+  test('@regression pagination next and previous controls change pages', async ({ shopPage }) => {
+    await shopPage.goto();
 
-})
+    await expect(shopPage.pagination.activePage).toHaveText('1');
+
+    await shopPage.pagination.next();
+    await expect(shopPage.pagination.activePage).toHaveText('2');
+
+    await shopPage.pagination.previous();
+    await expect(shopPage.pagination.activePage).toHaveText('1');
+  });
+});

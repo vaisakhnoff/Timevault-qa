@@ -1,8 +1,6 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 
-
 test.describe('TimeVault Admin Brand Tests', () => {
-
   test('@regression admin can toggle a brand listing status', async ({ brandPage }) => {
     await brandPage.goto();
 
@@ -17,5 +15,4 @@ test.describe('TimeVault Admin Brand Tests', () => {
     await brandPage.toggleFirstBrandStatus();
     await expect(brandPage.firstRowStatus).toHaveText(originalStatus);
   });
-  
 });

@@ -8,21 +8,18 @@ import { OrdersPage } from '../pages/admin/orders.page';
 import { ReturnsPage } from '../pages/admin/returns.page';
 import { DashboardPage } from '../pages/admin/dashboard.page';
 
-
 type AdminFixtures = {
   categoryPage: CategoryPage;
   brandPage: BrandPage;
   productPage: ProductPage;
   couponPage: CouponPage;
   customersPage: CustomersPage;
-  ordersPage :OrdersPage;
-    returnsPage: ReturnsPage;
-    dashboardPage : DashboardPage
-
+  ordersPage: OrdersPage;
+  returnsPage: ReturnsPage;
+  dashboardPage: DashboardPage;
 };
 
 export const test = base.extend<AdminFixtures>({
-
   categoryPage: async ({ page }, use) => {
     await use(new CategoryPage(page));
   },
@@ -42,16 +39,15 @@ export const test = base.extend<AdminFixtures>({
   customersPage: async ({ page }, use) => {
     await use(new CustomersPage(page));
   },
-    ordersPage: async ({ page }, use) => {
+  ordersPage: async ({ page }, use) => {
     await use(new OrdersPage(page));
   },
-    returnsPage: async ({ page }, use) => {
+  returnsPage: async ({ page }, use) => {
     await use(new ReturnsPage(page));
   },
-    dashboardPage: async ({ page }, use) => {
+  dashboardPage: async ({ page }, use) => {
     await use(new DashboardPage(page));
   },
-
 });
 
 export { expect } from '@playwright/test';

@@ -1,8 +1,10 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { CouponData } from '../../types';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class CouponPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly nameInput: Locator;
   readonly codeInput: Locator;
   readonly startDate: Locator;
@@ -12,13 +14,10 @@ export class CouponPage {
   readonly maxPrice: Locator;
   readonly addButton: Locator;
   readonly couponRows: Locator;
-  readonly successDialog: Locator;
-  readonly deletedDialog: Locator;
-  readonly confirmDeleteButton: Locator;
-  readonly okButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.nameInput = page.locator('#coupon-name');
     this.codeInput = page.locator('#coupon-code');
     this.startDate = page.locator('#startingDate');
@@ -27,13 +26,10 @@ export class CouponPage {
     this.minPrice = page.locator('#minimum-price');
     this.maxPrice = page.locator('#max-price');
     this.addButton = page.locator('#coupon-form button[type="submit"]');
-    
-    
-    this.couponRows = page.locator('table.table tbody tr').filter({ has: page.locator('.badge.bg-light') });
-    this.successDialog = page.getByText('Success!');
-    this.deletedDialog = page.getByText('Deleted!');
-    this.confirmDeleteButton = page.getByRole('button', { name: 'Delete' });
-    this.okButton = page.getByRole('button', { name: 'OK' });
+
+    this.couponRows = page
+      .locator('table.table tbody tr')
+      .filter({ has: page.locator('.badge.bg-light') });
   }
 
   async goto(): Promise<void> {
@@ -43,7 +39,7 @@ export class CouponPage {
   async getCouponCount(): Promise<number> {
     return this.page.locator('table.table tbody tr td .badge.bg-light').count();
   }
-// .badge.badge-success
+  // .badge.badge-success
 
   rowByCode(code: string): Locator {
     return this.page.locator('table.table tbody tr').filter({ hasText: code });
@@ -59,16 +55,16 @@ export class CouponPage {
     await this.maxPrice.fill(String(data.maxPrice));
     await this.addButton.click();
 
-    await this.successDialog.waitFor({ state: 'visible' });
-    await this.page.waitForLoadState('domcontentloaded');
+    await expect(this.alert.popup).toBeVisible();
+    await expect(this.alert.popup).toBeHidden();
   }
 
   async deleteCouponByCode(code: string): Promise<void> {
     const row = this.rowByCode(code);
     await row.getByRole('button', { name: 'Delete' }).click();
-    await this.confirmDeleteButton.click();
-    await this.deletedDialog.waitFor({ state: 'visible' });
-    await this.okButton.click();
+    await this.alert.confirm();
+    await expect(this.alert.title).toHaveText('Deleted!');
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 }
