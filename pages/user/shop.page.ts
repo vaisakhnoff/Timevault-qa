@@ -1,7 +1,10 @@
 import { Page, Locator } from '@playwright/test';
+import { parsePrice } from '../../utils/helpers';
+import { PaginationComponent } from '../../components/pagination.component';
 
 export class ShopPage {
   readonly page: Page;
+  readonly pagination: PaginationComponent;
 
   readonly productCards: Locator;
   readonly productCount: Locator;
@@ -14,6 +17,8 @@ export class ShopPage {
 
   constructor(page: Page) {
     this.page = page;
+
+    this.pagination = new PaginationComponent(page.locator('#paginationContainer'));
 
     this.productCards = page.locator('.vault-product-card');
     this.productCount = page.locator('#productCount');
@@ -55,6 +60,6 @@ export class ShopPage {
   async getCurrentPrices(): Promise<number[]> {
     const texts = await this.currentPrices.allInnerTexts();
 
-    return texts.map((t) => parseInt(t.replace(/[₹,\s]/g, ''), 10));
+    return texts.map(parsePrice);
   }
 }

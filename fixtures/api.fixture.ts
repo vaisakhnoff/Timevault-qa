@@ -1,8 +1,8 @@
 import { test as base, APIRequestContext } from '@playwright/test';
-import { CartApi } from '../clients/cart.api';
-import { createAnonymousContext } from '../request-context';
-import { WishlistApi } from '../clients/wishlist.api';
-import { AdminApi } from '../clients/admin.api';
+import { CartApi } from '../api/cart.api';
+import { createAnonymousContext } from '../api/request-context';
+import { WishlistApi } from '../api/wishlist.api';
+import { AdminApi } from '../api/admin.api';
 
 type ApiFixtures = {
   cartApi: CartApi;

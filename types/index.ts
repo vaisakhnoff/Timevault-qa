@@ -36,3 +36,11 @@ export type CouponData = {
   minPrice: number;
   maxPrice: number;
 };
+
+export interface NewUserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+}

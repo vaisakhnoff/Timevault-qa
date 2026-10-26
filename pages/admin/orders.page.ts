@@ -1,7 +1,9 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class OrdersPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly pageTitle: Locator;
   readonly searchInput: Locator;
   readonly statusFilter: Locator;
@@ -15,6 +17,7 @@ export class OrdersPage {
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.pageTitle = page.getByRole('heading', { name: 'Order Management' });
     this.searchInput = page.locator('input[name="search"]');
     this.statusFilter = page.locator('select[name="status"]');
@@ -51,9 +54,8 @@ export class OrdersPage {
   async updateStatus(newStatus: string): Promise<void> {
     await this.detailStatusSelect.selectOption(newStatus);
     await this.detailUpdateButton.click();
-    await this.page.getByRole('heading', { name: 'Success' }).waitFor({ state: 'visible' });
-
-    await this.page.getByRole('button', { name: 'OK' }).click();
+    await expect(this.alert.title).toHaveText('Success');
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 

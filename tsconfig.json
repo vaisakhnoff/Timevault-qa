@@ -10,6 +10,17 @@
     "noEmit": true
   },
 
-  "include": ["config", "pages", "fixtures", "api", "types", "tests", "playwright.config.ts"],
+  "include": [
+    "config",
+    "pages",
+    "fixtures",
+    "api",
+    "types",
+    "tests",
+    "playwright.config.ts",
+    "data",
+    "utils",
+    "components"
+  ],
   "exclude": ["node_modules"]
 }

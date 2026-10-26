@@ -1,13 +1,16 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class CustomersPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly searchInput: Locator;
   readonly searchButton: Locator;
   readonly customerRows: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.searchInput = page.locator('input[name="search"]');
     this.searchButton = page.getByRole('button', { name: 'Search' });
     this.customerRows = page.locator('table.table tbody tr');
@@ -33,17 +36,23 @@ export class CustomersPage {
 
   async blockByEmail(email: string): Promise<void> {
     await this.rowByEmail(email).locator('.blockCustomer').click();
-    await this.page.getByRole('button', { name: 'Yes, block user' }).click();
-    await this.page.getByText('User Blocked').waitFor({ state: 'visible' });
-    await this.page.getByRole('button', { name: 'OK' }).click();
+
+    await this.alert.confirm();
+
+    await expect(this.alert.title).toHaveText('User Blocked');
+
+    await this.alert.dismiss();
+
     await this.page.waitForLoadState('domcontentloaded');
   }
 
   async unblockByEmail(email: string): Promise<void> {
     await this.rowByEmail(email).locator('.unblockCustomer').click();
-    await this.page.getByRole('button', { name: 'Yes, unblock user' }).click();
-    await this.page.getByText('User Unblocked').waitFor({ state: 'visible' });
-    await this.page.getByRole('button', { name: 'OK' }).click();
+
+    await this.alert.confirm();
+
+    await expect(this.alert.title).toHaveText('User Unblocked');
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 }
