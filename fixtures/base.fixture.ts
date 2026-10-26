@@ -8,6 +8,7 @@ import { AddressPage } from '../pages/user/address.page';
 import { ProfilePage } from '../pages/user/profile.page';
 import { WalletPage } from '../pages/user/wallet.page';
 import { OrdersPage } from '../pages/user/orders.page';
+import { HeaderComponent } from '../components/header.component';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -19,6 +20,7 @@ type TestFixtures = {
   profilePage: ProfilePage;
   walletPage: WalletPage;
   ordersPage: OrdersPage;
+  header: HeaderComponent;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -54,6 +56,10 @@ export const test = base.extend<TestFixtures>({
 
   ordersPage: async ({ page }, use) => {
     await use(new OrdersPage(page));
+  },
+
+  header: async ({ page }, use) => {
+    await use(new HeaderComponent(page));
   },
 });
 
