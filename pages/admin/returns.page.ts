@@ -1,7 +1,9 @@
-import { Page, Locator } from '@playwright/test';
+import { expect, Page, Locator } from '@playwright/test';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class ReturnsPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly pageTitle: Locator;
   readonly returnRows: Locator;
   readonly orderLinks: Locator;
@@ -10,6 +12,7 @@ export class ReturnsPage {
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
 
     this.pageTitle = page.getByRole('heading', { name: 'Return Requests', exact: true });
 
@@ -29,17 +32,17 @@ export class ReturnsPage {
 
   async approveFirst(): Promise<void> {
     await this.firstRow.getByRole('button', { name: 'Approve' }).click();
-    await this.page.getByRole('button', { name: 'Yes, approve' }).click();
-    await this.page.getByText('Success').waitFor({ state: 'visible' });
-    await this.page.getByRole('button', { name: 'OK' }).click();
+    await this.alert.confirm();
+    await expect(this.alert.title).toHaveText('Success');
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 
   async declineFirst(): Promise<void> {
     await this.firstRow.getByRole('button', { name: 'Decline' }).click();
-    await this.page.getByRole('button', { name: 'Yes, decline' }).click();
-    await this.page.getByText('Success').waitFor({ state: 'visible' });
-    await this.page.getByRole('button', { name: 'OK' }).click();
+    await this.alert.confirm();
+    await expect(this.alert.title).toHaveText('Success');
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 }

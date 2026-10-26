@@ -9,8 +9,6 @@ export class ProductDetailsPage {
   readonly quantityInput: Locator;
   readonly addToCartButton: Locator;
   readonly wishlistButton: Locator;
-  readonly cartSuccessDialog: Locator;
-  readonly quantityLimitDialog: Locator;
   readonly increaseQtyButton: Locator;
   readonly decreaseQtyButton: Locator;
 
@@ -22,8 +20,6 @@ export class ProductDetailsPage {
     this.quantityInput = page.locator('#sst');
     this.addToCartButton = page.getByText('Acquire Piece', { exact: true });
     this.wishlistButton = page.getByTitle('Save to Wishlist');
-    this.cartSuccessDialog = page.getByText('Allocated to Bag');
-    this.quantityLimitDialog = page.getByText('Allocation Limit');
     this.increaseQtyButton = page.locator('button[onclick="updateQuantity(\'increase\')"]');
     this.decreaseQtyButton = page.locator('button[onclick="updateQuantity(\'decrease\')"]');
   }

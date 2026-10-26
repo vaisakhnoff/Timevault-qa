@@ -1,24 +1,23 @@
 import { Page, Locator } from '@playwright/test';
+import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class CategoryPage {
   readonly page: Page;
+  readonly alert: SweetAlertComponent;
   readonly nameInput: Locator;
   readonly descriptionInput: Locator;
   readonly addButton: Locator;
   readonly categoryRows: Locator;
   readonly totalCountLabel: Locator;
-  readonly successDialog: Locator;
-  readonly dialogConfirmButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.alert = new SweetAlertComponent(page);
     this.nameInput = page.locator('#product_name');
     this.descriptionInput = page.locator('#descriptionId');
     this.addButton = page.locator('form[action="/admin/addCategory"] button[type="submit"]');
     this.categoryRows = page.locator('table.table tbody tr');
     this.totalCountLabel = page.getByText(/\d+ Categories/);
-    this.successDialog = page.getByText('Category added successfully');
-    this.dialogConfirmButton = page.getByRole('button', { name: 'OK' });
   }
 
   async goto(): Promise<void> {
@@ -39,8 +38,7 @@ export class CategoryPage {
     await this.descriptionInput.fill(description);
     await this.addButton.click();
 
-    await this.successDialog.waitFor({ state: 'visible' });
-    await this.dialogConfirmButton.click();
+    await this.alert.dismiss();
     await this.page.waitForLoadState('domcontentloaded');
   }
 }
