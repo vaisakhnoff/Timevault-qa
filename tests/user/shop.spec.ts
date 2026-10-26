@@ -1,5 +1,4 @@
 import { test, expect } from '../../fixtures/base.fixture';
-import { ShopPage } from '../../pages/user/shop.page';
 import { isSortedAscending, isSortedDescending } from '../../utils/helpers';
 
 test.describe('TimeVault Shop Tests', () => {
