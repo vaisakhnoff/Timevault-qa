@@ -55,6 +55,8 @@ export class CouponPage {
     await this.maxPrice.fill(String(data.maxPrice));
     await this.addButton.click();
 
+    await expect(this.alert.title).toHaveText('Success!');
+
     await expect(this.alert.popup).toBeVisible();
     await expect(this.alert.popup).toBeHidden();
   }
