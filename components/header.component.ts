@@ -1,7 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 
 export class HeaderComponent {
-  readonly page: Page;
   readonly root: Locator;
 
   readonly userMenuButton: Locator;
@@ -11,7 +10,6 @@ export class HeaderComponent {
   readonly wishlistLink: Locator;
 
   constructor(page: Page) {
-    this.page = page;
     this.root = page.getByRole('banner');
 
     this.userMenuButton = this.root.locator('#userMenuBtn');
@@ -49,6 +47,5 @@ export class HeaderComponent {
     });
 
     await logoutLink.click();
-    await this.page.waitForURL(/\/login/);
   }
 }
