@@ -19,17 +19,14 @@ test.describe('Authorization - protected endpoints reject anonymous callers @api
     expect(res.status()).toBe(401);
   });
 
-  // KNOWN DEFECT — BUG-001 (docs/BUG_REPORTS.md): this endpoint has no auth
-  // middleware and returns 200 to anonymous callers (Broken Access Control / OWASP A01).
-  // The assertion below states the EXPECTED (secure) behavior. test.fail marks it as a
-  // known failing test so CI stays green; if the app is fixed, this test will
-  // "unexpectedly pass" and Playwright will flag it — our cue to remove test.fail.
-  test('GET /admin/dashboard-canceled-data without admin session is not accessible @security', async ({
+  // Regression test for BUG-001 (docs/BUG_REPORTS.md): this endpoint once answered 200 with
+  // analytics data to anonymous callers. It must redirect to the admin login instead.
+  test('anonymous caller is redirected to admin login from /admin/dashboard-canceled-data @security', async ({
     anonAdminApi,
   }) => {
-    test.fail(true, 'BUG-001: /admin/dashboard-canceled-data missing auth middleware');
-
     const res = await anonAdminApi.getCanceledAndReturnedData();
-    expect(res.status()).not.toBe(200);
+
+    expect(res.status()).toBe(302);
+    expect(res.headers()['location']).toContain('/admin/login');
   });
 });
