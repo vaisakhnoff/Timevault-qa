@@ -32,11 +32,15 @@ export function generateCoupon(overrides: Partial<CouponData> = {}): CouponData 
 }
 
 export function generateUser(): NewUserData {
+  const password = 'Test@12345';
+
   return {
-    firstName: faker.person.firstName(),
-    lastName: faker.person.lastName(),
+    firstName: faker.string.alpha({ length: 8 }),
+    lastName: faker.string.alpha({ length: 8 }),
     email: faker.internet.email(),
     phoneNumber: faker.string.numeric(10),
-    password: 'Test@12345',
+    password,
+    confirmPassword: password,
+    referalCode: '',
   };
 }

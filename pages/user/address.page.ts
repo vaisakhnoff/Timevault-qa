@@ -70,10 +70,12 @@ export class AddressPage {
 
     await this.deleteButton.first().click();
 
-    await this.alert.confirm();
-
-    await this.page.waitForResponse(
-      (res) => res.url().includes('/deleteAddress') && res.request().method() === 'POST',
+    const deleted = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/deleteAddress') && response.request().method() === 'POST',
     );
+
+    await this.alert.confirm();
+    await deleted;
   }
 }
