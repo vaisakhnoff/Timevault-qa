@@ -7,8 +7,10 @@ import { CustomersPage } from '../pages/admin/customers.page';
 import { OrdersPage } from '../pages/admin/orders.page';
 import { ReturnsPage } from '../pages/admin/returns.page';
 import { DashboardPage } from '../pages/admin/dashboard.page';
+import { AdminLoginPage } from '../pages/admin/admin-login.page';
 
 type AdminFixtures = {
+  adminLoginPage: AdminLoginPage;
   categoryPage: CategoryPage;
   brandPage: BrandPage;
   productPage: ProductPage;
@@ -20,6 +22,9 @@ type AdminFixtures = {
 };
 
 export const test = base.extend<AdminFixtures>({
+  adminLoginPage: async ({ page }, use) => {
+    await use(new AdminLoginPage(page));
+  },
   categoryPage: async ({ page }, use) => {
     await use(new CategoryPage(page));
   },

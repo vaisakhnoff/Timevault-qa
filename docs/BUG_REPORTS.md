@@ -7,6 +7,7 @@ Each defect is backed by an automated test and reproducible evidence.
 | ------- | ----------------------------------------------------------- | -------- | --------------------------------- | --------------------------------------- |
 | BUG-001 | Admin dashboard endpoint accessible without authentication  | High     | Broken Access Control (OWASP A01) | Fixed, verified by regression test      |
 | BUG-002 | Intermittent logged-out state after successful login        | High     | Functional / race condition       | Fixed, verified by repeated setup runs  |
+| BUG-003 | Signup rejects valid emails with an ending longer than 4 letters | Medium | Input validation | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -182,3 +183,68 @@ The Google OAuth callback in `controllers/user/userController.js` uses the same 
 changed. It likely has the same race. Google login is out of scope for automation (see
 `docs/TEST_PLAN.md`), so this is recorded as a recommendation: apply the same
 `req.session.save()` before redirecting.
+
+---
+
+## BUG-003: Signup rejects valid emails with an ending longer than 4 letters
+
+- **Severity:** Medium
+- **Type:** Input validation (client-side, over-restrictive)
+- **Status:** Open
+- **Component:** User authentication → signup
+- **Page:** `GET /signup` (client-side validation in `views/user/signup.ejs`)
+- **Environment:** Local — `http://localhost:3000`, Chromium
+- **Found by:** Boundary analysis of the signup email rule, confirmed in a browser and tracked by
+  `tests/user/signup-forgot-password.spec.ts` ("email ending of 7 letters is accepted by signup validation")
+
+### Description
+
+The signup form validates the email with a pattern that allows only 2 to 4 letters after the
+final dot (`\.[a-zA-Z]{2,4}$`). Many valid, in-use endings are longer (`.photos`, `.store`,
+`.digital`, `.travel`, `.museum`), so real customers with such addresses cannot register.
+The admin login form in the same application allows 2 to 6 letters, so the two rules are
+also inconsistent with each other.
+
+### Steps to reproduce
+
+1. Open `/signup`.
+2. Type `qa@example.photos` (or `qa@example.digital`) into the email field and leave the field.
+3. Observe the inline message under the field.
+
+### Expected result
+
+No inline error. The address is syntactically valid.
+
+### Actual result
+
+Inline error "Email is invalid" under the email field, and the form cannot be submitted.
+
+| Email | Result |
+| --- | --- |
+| `qa@example.com` | accepted |
+| `qa@example.info` (4 letters) | accepted |
+| `qa@example.photos` (6 letters) | **rejected** |
+| `qa@example.digital` (7 letters) | **rejected** |
+
+### Impact
+
+Customers with longer, legitimate email endings cannot create an account. This silently turns
+away users and is hard for them to diagnose, because the address is correct.
+
+### Recommendation
+
+Allow endings of at least 2 letters without an upper limit that excludes real endings, for
+example `[a-zA-Z]{2,}`, and use the same rule in signup and admin login.
+
+### Evidence
+
+- Browser probe against the running application (table above).
+- Automated test: `tests/user/signup-forgot-password.spec.ts`. The 4-letter boundary test
+  passes. The 7-letter test asserts the correct behaviour and is marked `test.fail('BUG-003')`,
+  so the suite stays green while the defect is open and the test is flagged as soon as it is
+  fixed.
+
+### Scope note
+
+Only the browser-side rule was tested. Whether the server also rejects such addresses was not
+checked, because a full signup would send a real OTP email.

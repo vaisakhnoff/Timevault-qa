@@ -81,6 +81,34 @@ test.describe('Signup and Forgot Password Tests', () => {
     });
   }
 
+  // Boundary on the email ending: 4 letters is accepted, 5+ letters should be too, because
+  // valid endings such as .photos, .store and .digital exist. The signup page only allows 2-4.
+  test('@auth @boundary email ending of 4 letters is accepted by signup validation', async ({
+    signupPage,
+  }) => {
+    await signupPage.goto();
+    await signupPage.emailInput.fill('qa@example.info');
+    await signupPage.emailInput.blur();
+
+    await expect(signupPage.emailError).toHaveText('');
+  });
+
+  // KNOWN DEFECT BUG-003 (docs/BUG_REPORTS.md): valid addresses with an ending longer than
+  // 4 letters are rejected by the signup form. The assertion states the CORRECT behaviour;
+  // test.fail keeps the suite green while the defect is open and flags the test as soon as
+  // the validation is fixed.
+  test('@auth @boundary email ending of 7 letters is accepted by signup validation', async ({
+    signupPage,
+  }) => {
+    test.fail(true, 'BUG-003: signup rejects valid email endings longer than 4 letters');
+
+    await signupPage.goto();
+    await signupPage.emailInput.fill('qa@example.digital');
+    await signupPage.emailInput.blur();
+
+    await expect(signupPage.emailError).toHaveText('');
+  });
+
   test('@auth @negative unknown email is rejected by forgot password', async ({
     forgotPasswordPage,
   }) => {
