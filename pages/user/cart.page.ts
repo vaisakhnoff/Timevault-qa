@@ -9,6 +9,7 @@ export class CartPage {
   readonly increaseButton: Locator;
   readonly decreaseButton: Locator;
   readonly removeButton: Locator;
+  readonly itemTotals: Locator;
   readonly subtotal: Locator;
 
   constructor(page: Page) {
@@ -20,6 +21,7 @@ export class CartPage {
     this.increaseButton = page.locator('.increase');
     this.decreaseButton = page.locator('.reduced');
     this.removeButton = page.locator('.remove-btn');
+    this.itemTotals = page.locator('.item-total');
     this.subtotal = page.locator('#subtotal');
   }
 
@@ -29,6 +31,16 @@ export class CartPage {
 
   async getItemCount(): Promise<number> {
     return this.cartItems.count();
+  }
+
+  async increaseFirstQuantity(): Promise<void> {
+    const updated = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/updateCart') && response.request().method() === 'POST',
+    );
+
+    await this.increaseButton.first().click();
+    await updated;
   }
 
   async removeFirstItem(): Promise<void> {
