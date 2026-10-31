@@ -16,8 +16,10 @@ export class OrderDetailsPage {
   constructor(page: Page) {
     this.page = page;
     this.alert = new SweetAlertComponent(page);
-    this.pageTitle = page.getByRole('heading', { name: 'Order Details' });
-    this.orderIdHeading = page.getByRole('heading', { name: /^Order ID:/ });
+    this.pageTitle = page.getByRole('heading', {
+      name: /^Order Allocation #ORD/,
+    });
+    this.orderIdHeading = this.pageTitle;
     this.itemRows = page.locator('.order-items tbody tr');
     this.shippingAddressHeading = page.getByRole('heading', { name: 'Shipping Address' });
     this.paymentSummaryHeading = page.getByRole('heading', { name: 'Payment Summary' });
