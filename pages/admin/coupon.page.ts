@@ -14,6 +14,8 @@ export class CouponPage {
   readonly maxPrice: Locator;
   readonly addButton: Locator;
   readonly couponRows: Locator;
+  readonly offerPriceError: Locator;
+  readonly startDateError: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,6 +32,8 @@ export class CouponPage {
     this.couponRows = page
       .locator('table.table tbody tr')
       .filter({ has: page.locator('.badge.bg-light') });
+    this.offerPriceError = page.locator('#error-offer-price');
+    this.startDateError = page.locator('#error-start-date');
   }
 
   async goto(): Promise<void> {
@@ -45,7 +49,7 @@ export class CouponPage {
     return this.page.locator('table.table tbody tr').filter({ hasText: code });
   }
 
-  async addCoupon(data: CouponData): Promise<void> {
+  async fillCouponForm(data: CouponData): Promise<void> {
     await this.nameInput.fill(data.name);
     await this.codeInput.fill(data.code);
     await this.startDate.fill(data.startDate);
@@ -53,7 +57,15 @@ export class CouponPage {
     await this.offerPrice.fill(String(data.offerPrice));
     await this.minPrice.fill(String(data.minPrice));
     await this.maxPrice.fill(String(data.maxPrice));
+  }
+
+  async submit(): Promise<void> {
     await this.addButton.click();
+  }
+
+  async addCoupon(data: CouponData): Promise<void> {
+    await this.fillCouponForm(data);
+    await this.submit();
 
     await expect(this.alert.title).toHaveText('Success!');
 
