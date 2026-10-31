@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { expect, Page, Locator } from '@playwright/test';
 import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class CartPage {
@@ -34,8 +34,16 @@ export class CartPage {
   async removeFirstItem(): Promise<void> {
     await this.removeButton.first().click();
 
-    await this.alert.confirm();
+    const removed = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/removeFromCart') && response.request().method() === 'POST',
+    );
 
+    await this.alert.confirm();
+    await removed;
+
+    await expect(this.alert.title).toHaveText('Removed!');
+    await expect(this.alert.popup).toBeHidden();
     await this.page.waitForLoadState('domcontentloaded').catch(() => {});
   }
 

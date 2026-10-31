@@ -8,6 +8,8 @@ import { AddressPage } from '../pages/user/address.page';
 import { ProfilePage } from '../pages/user/profile.page';
 import { WalletPage } from '../pages/user/wallet.page';
 import { OrdersPage } from '../pages/user/orders.page';
+import { CheckoutPage } from '../pages/user/checkout.page';
+import { OrderDetailsPage } from '../pages/user/order-details.page';
 import { HomePage } from '../pages/user/home.page';
 import { SignupPage } from '../pages/user/signup.page';
 import { ForgotPasswordPage } from '../pages/user/forgot-password.page';
@@ -23,6 +25,8 @@ type TestFixtures = {
   profilePage: ProfilePage;
   walletPage: WalletPage;
   ordersPage: OrdersPage;
+  checkoutPage: CheckoutPage;
+  orderDetailsPage: OrderDetailsPage;
   header: HeaderComponent;
   homePage: HomePage;
   signupPage: SignupPage;
@@ -62,6 +66,14 @@ export const test = base.extend<TestFixtures>({
 
   ordersPage: async ({ page }, use) => {
     await use(new OrdersPage(page));
+  },
+
+  checkoutPage: async ({ page }, use) => {
+    await use(new CheckoutPage(page));
+  },
+
+  orderDetailsPage: async ({ page }, use) => {
+    await use(new OrderDetailsPage(page));
   },
 
   header: async ({ page }, use) => {

@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { Address } from '../../types';
 import { SweetAlertComponent } from '../../components/sweetalert.component';
 
@@ -45,6 +45,12 @@ export class AddressPage {
     return this.addressCards.count();
   }
 
+  addressCardByName(name: string): Locator {
+    return this.page.locator('.vault-card').filter({
+      has: this.page.getByRole('heading', { name, exact: true }),
+    });
+  }
+
   async addAddress(data: Address): Promise<void> {
     await this.page.goto('/addAddress');
 
@@ -59,8 +65,22 @@ export class AddressPage {
 
     await this.submitButton.click();
     await this.page.waitForLoadState('domcontentloaded');
-
     await this.page.waitForURL(/\/userAddress/);
+  }
+
+  async deleteAddressByName(name: string): Promise<void> {
+    const card = this.addressCardByName(name);
+    const deleteButton = card.getByTitle('Delete Address');
+
+    await deleteButton.click();
+
+    const deleted = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/deleteAddress') && response.request().method() === 'POST',
+    );
+
+    await this.alert.confirm();
+    await deleted;
   }
 
   async deleteFirstAddress(): Promise<void> {
