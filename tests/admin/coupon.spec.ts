@@ -7,22 +7,20 @@ test.describe.configure({ mode: 'serial' });
 test.describe('TimeVault Admin Coupon Tests', () => {
   test('@regression admin can add a coupon', async ({ couponPage }) => {
     await couponPage.goto();
-    const before = await couponPage.getCouponCount();
+    await expect(couponPage.rowByCode(data.code)).toHaveCount(0);
 
     await couponPage.addCoupon(data);
 
-    await expect(couponPage.rowByCode(data.code)).toBeVisible();
-    expect(await couponPage.getCouponCount()).toBe(before + 1);
+    await expect(couponPage.rowByCode(data.code)).toHaveCount(1);
   });
 
   test('@regression admin can delete a coupon', async ({ couponPage }) => {
     await couponPage.goto();
-    const before = await couponPage.getCouponCount();
+    await expect(couponPage.rowByCode(data.code)).toHaveCount(1);
 
     await couponPage.deleteCouponByCode(data.code);
 
     await expect(couponPage.rowByCode(data.code)).toHaveCount(0);
-    expect(await couponPage.getCouponCount()).toBe(before - 1);
   });
 });
 

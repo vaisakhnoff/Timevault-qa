@@ -9,6 +9,17 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
+ * Specs that mutate state shared by the single QA customer account (cart, wishlist,
+ * address, orders, wallet) or the COD test product. They run in one single-worker
+ * project so they never overlap. The remaining user specs only read data and stay parallel.
+ */
+const sharedStateSpecs = [
+  /tests\/e2e\/.*\.spec\.ts/,
+  /tests\/user\/(cart|wishlist|checkout|address|product-details|shop)\.spec\.ts/,
+  /tests\/api\/cart-api\.spec\.ts/,
+];
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -56,7 +67,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: [/tests\/admin\//, /tests\/e2e\//],
+      testIgnore: [/tests\/admin\//, ...sharedStateSpecs],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -75,11 +86,12 @@ export default defineConfig({
       dependencies: ['setup-admin'],
     },
 
-    // Cross-role lifecycle suite: starts as a user and creates an admin context
-    // from admin.json inside the same test. It must run serially against shared data.
+    // Shared-state lane: customer specs that mutate the one QA account, plus cross-role
+    // lifecycle specs that open an admin context from admin.json inside the same test.
+    // workers: 1 limits THIS project to one test at a time.
     {
-      name: 'e2e',
-      testMatch: /tests\/e2e\/.*\.spec\.ts/,
+      name: 'shared-state',
+      testMatch: sharedStateSpecs,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
