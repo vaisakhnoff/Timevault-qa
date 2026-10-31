@@ -51,6 +51,11 @@ export class OrdersPage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
+  async openOrderById(orderId: string): Promise<void> {
+    await this.page.locator(`a[href="/admin/order/${orderId}"]`).click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+
   async updateStatus(newStatus: string): Promise<void> {
     await this.detailStatusSelect.selectOption(newStatus);
     await this.detailUpdateButton.click();

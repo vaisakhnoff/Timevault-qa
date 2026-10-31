@@ -30,6 +30,20 @@ export class ReturnsPage {
     return this.orderLinks.count();
   }
 
+  returnRowByOrderId(orderId: string): Locator {
+    return this.returnRows.filter({ hasText: orderId });
+  }
+
+  async approveByOrderId(orderId: string): Promise<void> {
+    const row = this.returnRowByOrderId(orderId);
+
+    await row.getByRole('button', { name: 'Approve' }).click();
+    await this.alert.confirm();
+    await expect(this.alert.title).toHaveText('Success');
+    await this.alert.dismiss();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+
   async approveFirst(): Promise<void> {
     await this.firstRow.getByRole('button', { name: 'Approve' }).click();
     await this.alert.confirm();

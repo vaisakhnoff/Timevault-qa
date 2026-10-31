@@ -56,7 +56,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: /tests\/admin\//,
+      testIgnore: [/tests\/admin\//, /tests\/e2e\//],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -73,6 +73,19 @@ export default defineConfig({
         storageState: 'playwright/.auth/admin.json',
       },
       dependencies: ['setup-admin'],
+    },
+
+    // Cross-role lifecycle suite: starts as a user and creates an admin context
+    // from admin.json inside the same test. It must run serially against shared data.
+    {
+      name: 'e2e',
+      testMatch: /tests\/e2e\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user', 'setup-admin'],
+      workers: 1,
     },
 
     // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.
