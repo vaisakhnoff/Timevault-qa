@@ -14,6 +14,9 @@ export class OrdersPage {
 
   readonly detailStatusSelect: Locator;
   readonly detailUpdateButton: Locator;
+  readonly detailPageTitle: Locator;
+  readonly userInformationHeading: Locator;
+  readonly itemsHeading: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -29,6 +32,9 @@ export class OrdersPage {
 
     this.detailStatusSelect = page.locator('select[name="newStatus"]');
     this.detailUpdateButton = page.getByRole('button', { name: 'Update' });
+    this.detailPageTitle = page.getByRole('heading', { name: 'Order Details' });
+    this.userInformationHeading = page.getByRole('heading', { name: 'User Information' });
+    this.itemsHeading = page.getByRole('heading', { name: 'Items in Order' });
   }
 
   async goto(): Promise<void> {
