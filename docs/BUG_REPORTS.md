@@ -248,3 +248,52 @@ example `[a-zA-Z]{2,}`, and use the same rule in signup and admin login.
 
 Only the browser-side rule was tested. Whether the server also rejects such addresses was not
 checked, because a full signup would send a real OTP email.
+
+
+---
+
+## BUG-004: Cancelling an individual pending order item does not restore product stock
+
+- **Severity:** High
+- **Type:** Data integrity / inventory management
+- **Status:** Open
+- **Component:** User orders → item cancellation
+- **Endpoint:** `POST /order/cancelItem`
+- **Environment:** Local — `http://localhost:3000`
+- **Found by:** Phase 5/6 checkout and order-lifecycle test design review
+
+### Description
+
+The user-facing order-detail page exposes only **Cancel Item**. Its handler marks the item as
+`Cancelled` and may credit a wallet refund for completed Online/Wallet payments, but it never
+increments the related product's `quantity`. A cancelled COD order therefore permanently reduces
+available inventory.
+
+### Expected result
+
+Cancelling a pending item should restore the cancelled quantity to product stock, matching the
+legacy whole-order cancellation handler's inventory behavior.
+
+### Actual result
+
+`cancelOrderItem` sets `item.status = 'Cancelled'` and saves the order without updating the
+Product record. The only controller path that restores stock is the legacy whole-order
+`cancelOrder` action, which has no UI control in `orderDetails.ejs`.
+
+### Impact
+
+Repeated customer cancellations reduce stock until a product appears out of stock despite the
+items never being fulfilled. Automated tests cannot safely use item cancellation as cleanup.
+
+### Recommended fix
+
+In the successful `cancelOrderItem` path, increment the product stock before saving the order:
+
+```js
+await Product.findByIdAndUpdate(item.productId, {
+  $inc: { quantity: item.quantity },
+});
+```
+
+Then cover the behavior with a regression test: order quantity decreases stock, cancellation
+restores it, and the final stock matches its initial value.

@@ -10,6 +10,9 @@ const envConfig = {
 
   adminEmail: process.env.TEST_ADMIN_EMAIL || '',
   adminPassword: process.env.TEST_ADMIN_PASSWORD || '',
+
+  blockableUserEmail: process.env.TEST_BLOCKABLE_USER_EMAIL || '',
+  blockableUserPassword: process.env.TEST_BLOCKABLE_USER_PASSWORD || '',
 };
 
 export default envConfig;
