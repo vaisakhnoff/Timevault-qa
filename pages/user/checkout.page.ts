@@ -13,6 +13,7 @@ export class CheckoutPage {
   readonly walletPayment: Locator;
   readonly placeOrderButton: Locator;
   readonly couponSelect: Locator;
+  readonly couponDropdown: Locator;
   readonly applyCouponButton: Locator;
   readonly removeCouponButton: Locator;
   readonly orderSummary: Locator;
@@ -32,6 +33,7 @@ export class CheckoutPage {
     this.walletPayment = page.locator('#wallet');
     this.placeOrderButton = page.locator('#checkout-form button[type="submit"]');
     this.couponSelect = page.locator('#coupon-select');
+    this.couponDropdown = page.locator('#coupon-select + .nice-select');
     this.applyCouponButton = page.locator('#apply-coupon-btn');
     this.removeCouponButton = page.locator('#remove-coupon-btn');
     this.orderSummary = page.locator('.order-summary');
@@ -59,7 +61,8 @@ export class CheckoutPage {
   }
 
   async applyCoupon(code: string): Promise<void> {
-    await this.couponSelect.selectOption(code);
+    await this.couponDropdown.click();
+    await this.couponDropdown.locator(`.option[data-value="${code}"]`).click();
 
     const applied = this.page.waitForResponse(
       (response) =>
@@ -68,6 +71,18 @@ export class CheckoutPage {
 
     await this.applyCouponButton.click();
     await applied;
+  }
+
+  async removeCoupon(): Promise<void> {
+    const removed = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/removeCoupon') && response.request().method() === 'POST',
+    );
+
+    await this.removeCouponButton.click();
+    await removed;
+    await expect(this.alert.title).toHaveText('Success');
+    await this.alert.dismiss();
   }
 
   async placeCodOrder(): Promise<string> {
