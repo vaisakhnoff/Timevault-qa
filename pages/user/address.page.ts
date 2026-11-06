@@ -16,6 +16,7 @@ export class AddressPage {
   readonly phone: Locator;
   readonly altPhone: Locator;
   readonly submitButton: Locator;
+  readonly updateButton: Locator;
   readonly emptyMessage: Locator;
   readonly deleteButton: Locator;
 
@@ -33,8 +34,13 @@ export class AddressPage {
     this.phone = page.locator('#phone_no');
     this.altPhone = page.locator('#altPhone_no');
     this.submitButton = page.getByRole('button', { name: /Save|Add/ });
+    this.updateButton = page.getByRole('button', { name: 'Update Address' });
     this.emptyMessage = page.getByRole('heading', { name: 'No Addresses Saved' });
     this.deleteButton = page.locator('.ti-trash');
+  }
+
+  editLinkByName(name: string): Locator {
+    return this.addressCardByName(name).locator('a[href^="/editAddress"]');
   }
 
   async goto(): Promise<void> {
@@ -66,6 +72,25 @@ export class AddressPage {
     await this.submitButton.click();
     await this.page.waitForLoadState('domcontentloaded');
     await this.page.waitForURL(/\/userAddress/);
+  }
+
+  /** Opens an address for editing, changes the city, and saves. */
+  async editAddressCity(name: string, newCity: string): Promise<void> {
+    await this.goto();
+    await this.editLinkByName(name).click();
+    await this.page.waitForURL(/\/editAddress/);
+
+    await this.city.fill(newCity);
+    await this.updateButton.click();
+
+    await this.alert.confirm();
+    await this.page.waitForURL(/\/userAddress/);
+  }
+
+  /** Submits the add-address form with all fields empty. */
+  async submitEmptyAddressForm(): Promise<void> {
+    await this.page.goto('/addAddress');
+    await this.submitButton.click();
   }
 
   async deleteAddressByName(name: string): Promise<void> {
