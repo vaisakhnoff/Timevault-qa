@@ -1,6 +1,6 @@
 import { test as base, APIRequestContext } from '@playwright/test';
 import { CartApi } from '../api/cart.api';
-import { createAnonymousContext } from '../api/request-context';
+import { createAnonymousContext, createAdminContext } from '../api/request-context';
 import { WishlistApi } from '../api/wishlist.api';
 import { AdminApi } from '../api/admin.api';
 
@@ -10,6 +10,8 @@ type ApiFixtures = {
   anonCartApi: CartApi;
   anonWishlistApi: WishlistApi;
   anonAdminApi: AdminApi;
+  adminContext: APIRequestContext;
+  adminApi: AdminApi;
 };
 
 export const test = base.extend<ApiFixtures>({
@@ -31,6 +33,16 @@ export const test = base.extend<ApiFixtures>({
   },
   anonAdminApi: async ({ anonContext }, use) => {
     await use(new AdminApi(anonContext));
+  },
+  // Playwright requires destructuring syntax for fixture args, even when none are used.
+  // eslint-disable-next-line no-empty-pattern
+  adminContext: async ({}, use) => {
+    const ctx = await createAdminContext();
+    await use(ctx);
+    await ctx.dispose();
+  },
+  adminApi: async ({ adminContext }, use) => {
+    await use(new AdminApi(adminContext));
   },
 });
 

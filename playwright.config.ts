@@ -16,7 +16,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 const sharedStateSpecs = [
   /tests\/e2e\/.*\.spec\.ts/,
   /tests\/user\/(cart|wishlist|checkout|address|product-details|shop)\.spec\.ts/,
-  /tests\/api\/cart-api\.spec\.ts/,
 ];
 
 /**
@@ -67,7 +66,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: [/tests\/admin\//, ...sharedStateSpecs],
+      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -86,6 +85,20 @@ export default defineConfig({
       dependencies: ['setup-admin'],
     },
 
+    // API suite: no page, only HTTP via APIRequestContext. The built-in `request`
+    // fixture inherits the user storageState, so it carries the user's session cookie.
+    // Admin calls open their own context from admin.json (see api/request-context.ts).
+    // workers: 1 because cart/wishlist specs mutate the single QA account.
+    {
+      name: 'api',
+      testMatch: /tests\/api\/.*\.spec\.ts/,
+      use: {
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user', 'setup-admin'],
+      workers: 1,
+    },
+
     // Shared-state lane: customer specs that mutate the one QA account, plus cross-role
     // lifecycle specs that open an admin context from admin.json inside the same test.
     // workers: 1 limits THIS project to one test at a time.
@@ -96,7 +109,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup-user', 'setup-admin'],
+      dependencies: ['setup-user', 'setup-admin', 'api'],
       workers: 1,
     },
 
