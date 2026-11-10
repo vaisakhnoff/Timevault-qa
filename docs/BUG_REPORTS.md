@@ -8,6 +8,9 @@ Each defect is backed by an automated test and reproducible evidence.
 | BUG-001 | Admin dashboard endpoint accessible without authentication  | High     | Broken Access Control (OWASP A01) | Fixed, verified by regression test      |
 | BUG-002 | Intermittent logged-out state after successful login        | High     | Functional / race condition       | Fixed, verified by repeated setup runs  |
 | BUG-003 | Signup rejects valid emails with an ending longer than 4 letters | Medium | Input validation | Open |
+| BUG-004 | Cancelling an individual pending order item does not restore product stock | High | Data integrity / inventory management | Open |
+| BUG-005 | `/updateCart` bypasses the 4-per-product cart limit | Medium | Business rule bypass | Open |
+| BUG-006 | `/addToCart` does not validate non-positive quantities | Low | Input validation | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -297,3 +300,99 @@ await Product.findByIdAndUpdate(item.productId, {
 
 Then cover the behavior with a regression test: order quantity decreases stock, cancellation
 restores it, and the final stock matches its initial value.
+
+---
+
+## BUG-005: `/updateCart` bypasses the 4-per-product cart limit
+- **Severity:** Medium
+- **Type:** Business rule bypass
+- **Status:** Open
+- **Component:** User cart → quantity update
+- **Endpoint:** `POST /updateCart`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API boundary tests (`tests/api/cart-api.spec.ts`)
+### Description
+`/addToCart` limits each product line to `Math.min(product.quantity, 4)`. `/updateCart` only
+compares the requested quantity against product stock, so a direct request can set a line to any
+quantity up to the full stock level.
+### Steps to reproduce
+1. Log in as a customer.
+2. `POST /addToCart` with `{ "id": "6aad1146c76606074021e7ec", "quantity": 1 }` (product stock 18).
+3. `POST /updateCart` with `{ "items": [{ "productId": "6aad1146c76606074021e7ec", "quantity": 5 }] }`.
+4. Open `/cartPage`.
+### Expected result
+Step 3 answers `400` with a message that at most 4 units are allowed per product.
+### Actual result
+Step 3 answers `200 {"success":true,"message":"Cart updated successfully"}`. The cart page renders
+the line with quantity 5. A follow-up `POST /addToCart` with quantity 1 answers
+`400 "You can only have a maximum of 4 quantities of this product in your cart"`, which confirms
+the stored quantity is already above the limit. Reproduced on two consecutive runs.
+### Impact
+Customers can order more units of a product than the per-product rule allows by calling the
+endpoint directly. The UI hides the issue because the quantity stepper clamps at 4.
+### Root cause
+`controllers/user/cartController.js` `updateCart` checks only
+`updatedItem.quantity > product.quantity`. It never applies the `Math.min(product.quantity, 4)`
+limit used by `addToCart`, and it has no lower bound.
+### Recommended fix
+Apply the same limit as `addToCart` before updating the line:
+```js
+const maxAllowed = Math.min(product.quantity, 4);
+if (!Number.isInteger(updatedItem.quantity) || updatedItem.quantity < 1 || updatedItem.quantity > maxAllowed) {
+  return res.status(400).json({
+    success: false,
+    message: `Maximum ${maxAllowed} quantities allowed per product`,
+  });
+}
+```
+### Regression test
+`Cart API › POST /updateCart › rejects quantity above the per-product limit (5) with 400`,
+marked `test.fail('BUG-005')` while the defect is open.
+
+---
+
+## BUG-006: `/addToCart` does not validate non-positive quantities
+- **Severity:** Low
+- **Type:** Input validation
+- **Status:** Open
+- **Component:** User cart → add item
+- **Endpoint:** `POST /addToCart`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API boundary tests (`tests/api/cart-api.spec.ts`)
+### Description
+The handler reads `parseInt(req.body.quantity) || 1` and checks only the upper limit.
+- Quantity `0` is falsy, so `|| 1` silently turns it into `1` and the item is added.
+- Quantity `-1` passes the handler. The cart schema (`quantity: { min: 1 }`) then throws a
+  Mongoose `ValidationError` on `cart.save()`, and the `catch` block answers `500`.
+### Steps to reproduce
+1. Log in as a customer. Make sure product `6aad1146c76606074021e7ec` is not in the cart.
+2. `POST /addToCart` with `{ "id": "6aad1146c76606074021e7ec", "quantity": 0 }`.
+3. `POST /addToCart` with the same id and `"quantity": 3`, then again with `"quantity": 1`.
+4. Remove the product from the cart, then `POST /addToCart` with `"quantity": -1`.
+### Expected result
+Steps 2 and 4 answer `400` with a validation message for any quantity below 1.
+### Actual result
+- Step 2: `200 {"success":true,"message":"Product added to cart successfully"}`.
+- Step 3: quantity 3 is accepted, then quantity 1 is rejected with
+  `400 "You can only have a maximum of 4 quantities ..."`. This proves step 2 stored 1 unit.
+- Step 4: `500 {"success":false,"message":"Error adding item to cart"}`.
+- Reproduced on two consecutive runs.
+### Impact
+No invalid data is stored, because the schema guards the database. Clients still get a misleading
+success for quantity 0 and a server-error status for bad input, and every negative request
+writes an error to the server log.
+### Root cause
+`controllers/user/cartController.js` `addToCart` has no lower-bound check, and the `|| 1`
+fallback treats `0` the same as a missing value.
+### Recommended fix
+Validate the quantity before any database work:
+```js
+const quantity = Number.parseInt(req.body.quantity, 10);
+if (!Number.isInteger(quantity) || quantity < 1) {
+  return res.status(400).json({ success: false, message: 'Quantity must be at least 1' });
+}
+```
+### Regression tests
+`Cart API › POST /addToCart › rejects quantity 0 with 400 @negative` and
+`rejects a negative quantity (-1) with 400 @negative`, both marked `test.fail('BUG-006')` while
+the defect is open.
