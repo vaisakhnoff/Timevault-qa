@@ -12,11 +12,15 @@ type ApiFixtures = {
   anonAdminApi: AdminApi;
   adminContext: APIRequestContext;
   adminApi: AdminApi;
+  wishlistApi: WishlistApi;
 };
 
 export const test = base.extend<ApiFixtures>({
   cartApi: async ({ request }, use) => {
     await use(new CartApi(request));
+  },
+  wishlistApi: async ({ request }, use) => {
+    await use(new WishlistApi(request));
   },
   // Playwright requires destructuring syntax for fixture args, even when none are used.
   // eslint-disable-next-line no-empty-pattern

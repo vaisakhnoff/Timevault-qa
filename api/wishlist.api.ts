@@ -1,5 +1,7 @@
 import { APIRequestContext, APIResponse } from '@playwright/test';
 
+export type WishlistResponse = { success: boolean; message: string };
+
 export class WishlistApi {
   constructor(private request: APIRequestContext) {}
 
@@ -11,10 +13,10 @@ export class WishlistApi {
     });
   }
 
-  removeFromWishlist(id: string): Promise<APIResponse> {
+  removeFromWishlist(productId: string): Promise<APIResponse> {
     return this.request.post('/removeFromWishlist', {
       data: {
-        id,
+        productId,
       },
     });
   }

@@ -11,6 +11,7 @@ Each defect is backed by an automated test and reproducible evidence.
 | BUG-004 | Cancelling an individual pending order item does not restore product stock | High | Data integrity / inventory management | Open |
 | BUG-005 | `/updateCart` bypasses the 4-per-product cart limit | Medium | Business rule bypass | Open |
 | BUG-006 | `/addToCart` does not validate non-positive quantities | Low | Input validation | Open |
+| BUG-007 | `/addWishlist` stores product ids that do not exist | Low | Input validation / data integrity | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -396,3 +397,56 @@ if (!Number.isInteger(quantity) || quantity < 1) {
 `Cart API › POST /addToCart › rejects quantity 0 with 400 @negative` and
 `rejects a negative quantity (-1) with 400 @negative`, both marked `test.fail('BUG-006')` while
 the defect is open.
+
+---
+
+## BUG-007: `/addWishlist` stores product ids that do not exist
+- **Severity:** Low
+- **Type:** Input validation / data integrity
+- **Status:** Open
+- **Component:** User wishlist → add item
+- **Endpoint:** `POST /addWishlist`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/wishlist-api.spec.ts`)
+### Description
+`addWishlist` pushes `req.body.id` into the wishlist without checking that a product with that id
+exists. A well-formed but unknown ObjectId is saved. A malformed id fails the ObjectId cast on
+save and is answered as a server error.
+### Steps to reproduce
+1. Log in as a customer.
+2. `POST /addWishlist` with `{ "id": "000000000000000000000000" }`.
+3. Send the same request again.
+4. Open `/wishlist`.
+5. `POST /addWishlist` with `{ "id": "not-an-id" }`.
+### Expected result
+Step 2 answers `404 Product not found`, the same way `/addToCart` handles an unknown product.
+Step 5 answers `400` for a malformed id.
+### Actual result
+- Step 2: `200 {"success":true,"message":"Product added to wishlist"}`.
+- Step 3: `200 {"success":false,"message":"Product already exists in wishlist"}`. This proves
+  the unknown id was stored.
+- Step 4: the page renders `200` and does not show the entry, because `populate` returns `null`
+  and the view filters it out.
+- Step 5: `500 {"success":false,"message":"Error adding product to wishlist"}`.
+- Reproduced on two consecutive runs.
+### Impact
+Orphan entries accumulate in the `wishlists` collection and are invisible to the customer, so
+they cannot remove them from the UI. The success response misleads API clients. Malformed ids
+write a server error to the log.
+### Root cause
+`controllers/user/wishlistController.js` `addWishlist` validates only that `id` is present. It
+never calls `Product.findById`, and it does not validate the id format.
+### Recommended fix
+Validate the id and the product before saving:
+```js
+if (!mongoose.isValidObjectId(id)) {
+  return res.status(400).json({ success: false, message: 'Invalid product id' });
+}
+const exists = await Product.exists({ _id: id });
+if (!exists) {
+  return res.status(404).json({ success: false, message: 'Product not found' });
+}
+```
+### Regression test
+`Wishlist API › POST /addWishlist rejects a non-existent product with 404 @negative`, marked
+`test.fail('BUG-007')` while the defect is open.
