@@ -12,6 +12,10 @@ Each defect is backed by an automated test and reproducible evidence.
 | BUG-005 | `/updateCart` bypasses the 4-per-product cart limit | Medium | Business rule bypass | Open |
 | BUG-006 | `/addToCart` does not validate non-positive quantities | Low | Input validation | Open |
 | BUG-007 | `/addWishlist` stores product ids that do not exist | Low | Input validation / data integrity | Open |
+| BUG-008 | Admin login reveals whether an email belongs to an admin account | Medium | Account enumeration (OWASP A07) | Open |
+| BUG-009 | `/applyCoupon` interprets the coupon code as a regular expression | High | Injection (OWASP A03) | Open |
+| BUG-010 | Coupon endpoints accept anonymous requests | Medium | Broken Access Control (OWASP A01) | Open |
+| BUG-011 | Admin can create a coupon whose end date is before its start date | Low | Input validation | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -450,3 +454,180 @@ if (!exists) {
 ### Regression test
 `Wishlist API › POST /addWishlist rejects a non-existent product with 404 @negative`, marked
 `test.fail('BUG-007')` while the defect is open.
+
+---
+
+## BUG-008: Admin login reveals whether an email belongs to an admin account
+- **Severity:** Medium
+- **Type:** Account enumeration (OWASP A07: Identification and Authentication Failures)
+- **Status:** Open
+- **Component:** Admin authentication
+- **Endpoint:** `POST /admin/login`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/auth-api.spec.ts`)
+### Description
+`POST /admin/login` answers failed logins with two different messages. An unknown email gets
+`"Invalid email address"`, and a known admin email with a wrong password gets `"Invalid password"`.
+Anyone can use the difference to confirm which emails are admin accounts, then focus password
+guessing on them. The customer login (`POST /login`) does not have this problem: it answers every
+failure with the same `"Incorrect email or password"`.
+### Steps to reproduce
+1. Without a session, `POST /admin/login` with `{ "email": "nobody.qa@example.com", "password": "x" }`.
+2. `POST /admin/login` with the real admin email and `"password": "wrong-password"`.
+### Expected result
+Both requests answer the same generic failure, for example
+`{ "success": false, "message": "Invalid email or password" }`.
+### Actual result
+- Step 1: `200 {"success":false,"message":"Invalid email address"}`.
+- Step 2: `200 {"success":false,"message":"Invalid password"}`.
+- Reproduced on two consecutive runs.
+### Impact
+The admin account is the highest-privilege account in the application. Confirming its email
+removes half of the guessing work for a credential attack.
+### Root cause
+`controllers/admin/adminController.js` `login` returns a separate message for the
+"admin not found" branch and for the "password mismatch" branch.
+### Recommended fix
+Return one generic message from both branches:
+```js
+const INVALID = { success: false, message: 'Invalid email or password' };
+if (!admin) return res.json(INVALID);
+// ...
+if (!passwordMatch) return res.json(INVALID);
+```
+### Regression test
+`Auth API › POST /admin/login › failure message does not reveal whether the email exists @security`,
+marked `test.fail('BUG-008')` while the defect is open.
+### Note for the fix
+`tests/admin/admin-auth.spec.ts` (lines 66, 76, 87) asserts the current two messages in the UI.
+Those assertions must change to the generic message in the same change as the fix.
+
+---
+
+## BUG-009: `/applyCoupon` interprets the coupon code as a regular expression
+- **Severity:** High
+- **Type:** Injection (OWASP A03) — regular-expression injection
+- **Status:** Open
+- **Component:** Checkout → apply coupon
+- **Endpoint:** `POST /applyCoupon`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/coupon-api.spec.ts`)
+### Description
+The handler looks the coupon up with
+`couponCode: { $regex: new RegExp("^" + couponCode.trim() + "$", "i") }`. The customer's input is
+placed into the pattern without escaping, so regex syntax in the input is interpreted.
+- A wildcard such as `TESTAB.*` matches any listed coupon whose code starts with `TESTAB`. A
+  customer can apply a coupon without knowing its code.
+- An invalid pattern such as `(` makes `new RegExp()` throw, which the `catch` block answers as `500`.
+### Steps to reproduce
+1. As admin, create a listed coupon with code `QAP639227`, offer 10, minimum 100.
+2. As a customer with one item in the cart, `POST /applyCoupon` with `{ "couponCode": "QAP63.*" }`.
+3. `POST /removeCoupon`, then `POST /applyCoupon` with `{ "couponCode": "(" }`.
+### Expected result
+Step 2 answers `404 Coupon not found`, because no coupon has the literal code `QAP63.*`.
+Step 3 answers `404` (or `400`) for an unknown code.
+### Actual result
+- Step 2: `200 {"success":true,"message":"Coupon applied","coupon":{"code":"QAP639227",...},"discount":10}`.
+- Step 3: `500 {"success":false,"message":"Internal server error"}`.
+- Reproduced on two consecutive runs.
+### Impact
+- Customers can guess-apply coupons with a wildcard, bypassing the secrecy of coupon codes.
+- Together with BUG-010, an anonymous caller can enumerate every listed code one character at a
+  time (`A.*`, `B.*`, ...) by reading `404` vs `400` answers.
+- Crafted patterns can cause catastrophic backtracking (ReDoS) on the database query.
+### Root cause
+`controllers/user/cartController.js` `applyCoupon` builds a `RegExp` from raw user input.
+### Recommended fix
+Match the code exactly instead of with a pattern:
+```js
+const code = couponCode.trim().toUpperCase();
+const coupon = await Coupon.findOne({ couponCode: code, isList: true });
+```
+If case-insensitive matching must stay, escape the input first:
+`couponCode.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')`.
+### Regression tests
+`Coupon API › POST /applyCoupon › treats regex wildcards as plain text @security` and
+`answers an invalid regex character with 404, not 500 @security`, both marked
+`test.fail('BUG-009')` while the defect is open.
+
+---
+
+## BUG-010: Coupon endpoints accept anonymous requests
+- **Severity:** Medium
+- **Type:** Broken Access Control (OWASP A01)
+- **Status:** Open
+- **Component:** Checkout → coupons
+- **Endpoints:** `POST /applyCoupon`, `POST /removeCoupon`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/coupon-api.spec.ts`)
+### Description
+`routes/userRouter.js` lines 108–109 register both coupon routes without `auth.checkSession`,
+unlike every other cart and checkout route. The handlers do not check `req.session.user`
+themselves, so anonymous callers reach the coupon lookup.
+### Steps to reproduce
+1. Without a session, `POST /applyCoupon` with `{ "couponCode": "NOPE999" }`.
+2. Without a session, `POST /applyCoupon` with a real listed code.
+3. Without a session, `POST /removeCoupon`.
+### Expected result
+All three answer `401 User not authenticated`, the same as `/addToCart`.
+### Actual result
+- Step 1: `404 {"success":false,"message":"Coupon not found"}`.
+- Step 2: `400 {"success":false,"message":"Your cart is empty"}`.
+- Step 3: `400 {"success":false,"message":"No coupon applied"}`.
+- Reproduced on two consecutive runs.
+### Impact
+The different answers in steps 1 and 2 tell an anonymous caller whether a code exists. Combined
+with BUG-009, this lets anyone enumerate all coupon codes without an account.
+### Root cause
+Missing `auth.checkSession` middleware on the two routes.
+### Recommended fix
+```js
+router.post('/applyCoupon', auth.checkSession, cartController.applyCoupon);
+router.post('/removeCoupon', auth.checkSession, cartController.removeCoupon);
+```
+### Regression test
+`Coupon API › anonymous POST /applyCoupon is rejected with 401 @security`, marked
+`test.fail('BUG-010')` while the defect is open.
+
+---
+
+## BUG-011: Admin can create a coupon whose end date is before its start date
+- **Severity:** Low
+- **Type:** Input validation
+- **Status:** Open
+- **Component:** Admin → coupon management
+- **Endpoint:** `POST /admin/addCoupon`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/coupon-api.spec.ts`)
+### Description
+`addCoupon` rejects a start date in the past and checks the price order, but it never compares
+the end date with the start date. A coupon that is already expired when it is created is saved
+and listed.
+### Steps to reproduce
+1. As admin, `POST /admin/addCoupon` with a start date of today and an end date of yesterday
+   (offer 10, minimum 100, maximum 100000).
+2. As a customer with an item in the cart, apply the new code.
+### Expected result
+Step 1 answers `400` with a message that the end date must be after the start date.
+### Actual result
+- Step 1: `200 {"success":true,"message":"Coupon added successfully"}`.
+- Step 2: `400 "Coupon has expired"`.
+- Reproduced on two consecutive runs.
+### Impact
+Admins can publish coupons that never work, and customers see an unexplained "expired" error.
+`editCoupon` already checks that the end date is in the future, so the two forms behave
+inconsistently.
+### Root cause
+`controllers/admin/couponController.js` `addCoupon` has no `endDate > startDate` check.
+### Recommended fix
+```js
+if (endDateObj <= startDateObj) {
+  return res.status(400).json({ success: false, message: 'End date must be after the start date' });
+}
+```
+### Regression test
+`Coupon API › admin cannot create a coupon that ends before it starts @negative`, marked
+`test.fail('BUG-011')` while the defect is open.
+### Note for the fix
+The `EXPIRED` coupon in `tests/api/coupon-api.spec.ts` is created through this defect. After
+the fix, that test needs another way to obtain an expired coupon.
