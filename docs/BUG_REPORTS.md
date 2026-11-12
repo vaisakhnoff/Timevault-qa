@@ -16,6 +16,9 @@ Each defect is backed by an automated test and reproducible evidence.
 | BUG-009 | `/applyCoupon` interprets the coupon code as a regular expression | High | Injection (OWASP A03) | Open |
 | BUG-010 | Coupon endpoints accept anonymous requests | Medium | Broken Access Control (OWASP A01) | Open |
 | BUG-011 | Admin can create a coupon whose end date is before its start date | Low | Input validation | Open |
+| BUG-012 | Blocked products can still be added to the cart and wishlist | Medium | Business rule bypass | Open |
+| BUG-013 | `/admin/blockCustomer` reports success for an unknown customer id | Low | Error handling | Open |
+| BUG-014 | A customer blocked mid-session can still change their wishlist | Medium | Broken Access Control (OWASP A01) | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -631,3 +634,137 @@ if (endDateObj <= startDateObj) {
 ### Note for the fix
 The `EXPIRED` coupon in `tests/api/coupon-api.spec.ts` is created through this defect. After
 the fix, that test needs another way to obtain an expired coupon.
+
+---
+
+## BUG-012: Blocked products can still be added to the cart and wishlist
+- **Severity:** Medium
+- **Type:** Business rule bypass
+- **Status:** Open
+- **Component:** User cart and wishlist
+- **Endpoints:** `POST /addToCart`, `POST /addWishlist`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/admin-api.spec.ts`)
+### Description
+When an admin blocks a product, the shop stops listing it. The cart and wishlist endpoints do not
+check `product.isBlocked`, so a direct request still adds the blocked product.
+### Steps to reproduce
+1. As admin, `POST /admin/blockProduct` with `{ "id": "6aad1146c76606074021e7ec" }`. The response
+   shows `"isBlocked": true`.
+2. As a customer, `POST /addToCart` with `{ "id": "6aad1146c76606074021e7ec", "quantity": 1 }`.
+3. As the same customer, `POST /addWishlist` with `{ "id": "6aad1146c76606074021e7ec" }`.
+4. As admin, `POST /admin/unblockProduct` with the same id to restore the product.
+### Expected result
+Steps 2 and 3 answer `400` (or `404`) with a message that the product is unavailable.
+### Actual result
+- Step 2: `200 {"success":true,"message":"Product added to cart successfully"}`.
+- Step 3: `200 {"success":true,"message":"Product added to wishlist"}`.
+- Reproduced on two consecutive runs.
+### Impact
+Customers can put products the admin has withdrawn (for example recalled or mispriced items) into
+the cart, which leads into checkout. Blocking a product does not stop it from being sold.
+### Root cause
+`controllers/user/cartController.js` `addToCart` loads the product with `Product.findById` and
+checks only existence and quantity. `controllers/user/wishlistController.js` `addWishlist` does
+not load the product at all (see BUG-007).
+### Recommended fix
+Reject blocked products in both handlers:
+```js
+const product = await Product.findOne({ _id: productId, isBlocked: false }).lean();
+if (!product) {
+  return res.status(404).json({ success: false, message: 'Product not available' });
+}
+```
+Checkout should also re-check `isBlocked` for items that were already in the cart before the
+block.
+### Regression test
+`Admin API › product block › a blocked product cannot be added to the cart @negative`, marked
+`test.fail('BUG-012')` while the defect is open.
+
+---
+
+## BUG-013: `/admin/blockCustomer` reports success for an unknown customer id
+- **Severity:** Low
+- **Type:** Error handling
+- **Status:** Open
+- **Component:** Admin → customer management
+- **Endpoints:** `GET /admin/blockCustomer`, `GET /admin/unblockCustomer`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/admin-api.spec.ts`)
+### Description
+`blockCustomer` calls `User.findByIdAndUpdate` and answers success without checking whether a
+user was found. `unblockCustomer` has the same code. `blockProduct` handles the same case
+correctly with `404`.
+### Steps to reproduce
+1. As admin, `GET /admin/blockCustomer?id=000000000000000000000000`.
+### Expected result
+`404 {"success":false,"message":"Customer not found"}`.
+### Actual result
+`200 {"success":true,"message":"Customer blocked successfully"}`. Reproduced on two consecutive
+runs.
+### Impact
+The admin UI and any automation get a false confirmation, for example after the customer was
+deleted or when an id is mistyped.
+### Root cause
+`controllers/admin/customerController.js` ignores the return value of `findByIdAndUpdate`.
+### Recommended fix
+```js
+const user = await User.findByIdAndUpdate(id, { isBlocked: true });
+if (!user) {
+  return res.status(404).json({ success: false, message: 'Customer not found' });
+}
+```
+Apply the same check in `unblockCustomer`.
+### Regression test
+`Admin API › customer block › blockCustomer returns 404 for an unknown customer @negative`, marked
+`test.fail('BUG-013')` while the defect is open.
+### Related observation (not verified)
+Both endpoints change data through `GET` requests, and the session cookie sets no explicit
+`sameSite`. This may allow cross-site request forgery against a logged-in admin. It needs a
+browser-based check before it can be reported.
+
+---
+
+## BUG-014: A customer blocked mid-session can still change their wishlist
+- **Severity:** Medium
+- **Type:** Broken Access Control (OWASP A01)
+- **Status:** Open
+- **Component:** User wishlist
+- **Endpoints:** `POST /addWishlist`, `POST /removeFromWishlist`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/admin-api.spec.ts`)
+### Description
+Blocking a customer does not end their existing session. The `auth.checkSession` middleware
+rejects blocked users and destroys their session, but `routes/userRouter.js` lines 99–100 register
+the two wishlist routes without it. Their handlers check only that `req.session.user` exists, not
+whether that user is blocked.
+### Steps to reproduce
+1. Log in as a throwaway customer (`POST /login`), and keep the session cookie.
+2. As admin, `GET /admin/blockCustomer?id=<that customer's id>`.
+3. With the customer's session, `POST /addWishlist` and `POST /removeFromWishlist` for any product.
+4. With the same session, `POST /addToCart`.
+5. With the same session, `POST /addWishlist` again.
+6. As admin, unblock the customer.
+### Expected result
+Steps 3, 4 and 5 all answer `401`. A blocked customer can do nothing with an existing session.
+### Actual result
+- Step 3: both wishlist calls answer `200` and change the wishlist.
+- Step 4: `401 "User not authenticated"`. `checkSession` sees the block and destroys the session.
+- Step 5: `401`, because the session no longer exists.
+- Reproduced on two consecutive runs.
+### Impact
+A blocked customer keeps write access to their wishlist for as long as they avoid any route that
+uses `checkSession`. The block is enforced only by chance, depending on which route is called next.
+### Root cause
+Missing `auth.checkSession` on the wishlist routes. The same pattern causes BUG-010 for the
+coupon routes.
+### Recommended fix
+```js
+router.post('/addWishlist', auth.checkSession, wishlistController.addWishlist);
+router.post('/removeFromWishlist', auth.checkSession, wishlistController.removeFromWishlist);
+```
+A stronger fix is to destroy the customer's sessions in the session store when the admin blocks them.
+### Regression test
+`Admin API › customer block › a customer blocked mid-session cannot change their wishlist @security`,
+marked `test.fail('BUG-014')` while the defect is open. It needs `TEST_BLOCKABLE_USER_EMAIL` and
+`TEST_BLOCKABLE_USER_PASSWORD`, and skips without them.

@@ -18,6 +18,7 @@ type ApiFixtures = {
   authApi: AuthApi;
   couponApi: CouponApi;
   anonCouponApi: CouponApi;
+  userAdminApi: AdminApi;
 };
 
 type ApiWorkerFixtures = {
@@ -65,6 +66,10 @@ export const test = base.extend<ApiFixtures, ApiWorkerFixtures>({
   },
   anonCouponApi: async ({ anonContext }, use) => {
     await use(new CouponApi(anonContext));
+  },
+
+  userAdminApi: async ({ request }, use) => {
+    await use(new AdminApi(request));
   },
 
   workerAdminApi: [
