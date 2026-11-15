@@ -5,6 +5,10 @@ import { WishlistApi } from '../api/wishlist.api';
 import { AdminApi } from '../api/admin.api';
 import { AuthApi } from '../api/auth.api';
 import { CouponApi } from '../api/coupon.api';
+import { OrderApi, type OrderRef } from '../api/order.api';
+import { ProductApi } from '../api/product.api';
+import { COD_SAFE_PRODUCT } from '../data/checkout-test-data';
+import { placePendingCodOrder } from '../api/order.flow';
 
 type ApiFixtures = {
   cartApi: CartApi;
@@ -19,6 +23,10 @@ type ApiFixtures = {
   couponApi: CouponApi;
   anonCouponApi: CouponApi;
   userAdminApi: AdminApi;
+  orderApi: OrderApi;
+  anonOrderApi: OrderApi;
+  productApi: ProductApi;
+  pendingOrder: OrderRef;
 };
 
 type ApiWorkerFixtures = {
@@ -70,6 +78,25 @@ export const test = base.extend<ApiFixtures, ApiWorkerFixtures>({
 
   userAdminApi: async ({ request }, use) => {
     await use(new AdminApi(request));
+  },
+  orderApi: async ({ request }, use) => {
+    await use(new OrderApi(request));
+  },
+  anonOrderApi: async ({ anonContext }, use) => {
+    await use(new OrderApi(anonContext));
+  },
+  productApi: async ({ request }, use) => {
+    await use(new ProductApi(request));
+  },
+
+  pendingOrder: async ({ cartApi, couponApi, orderApi }, use) => {
+    const order = await placePendingCodOrder(
+      { cart: cartApi, coupon: couponApi, order: orderApi },
+      COD_SAFE_PRODUCT.id,
+    );
+
+    await use(order);
+    await orderApi.cancelOrder(order.id);
   },
 
   workerAdminApi: [

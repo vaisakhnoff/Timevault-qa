@@ -19,6 +19,9 @@ Each defect is backed by an automated test and reproducible evidence.
 | BUG-012 | Blocked products can still be added to the cart and wishlist | Medium | Business rule bypass | Open |
 | BUG-013 | `/admin/blockCustomer` reports success for an unknown customer id | Low | Error handling | Open |
 | BUG-014 | A customer blocked mid-session can still change their wishlist | Medium | Broken Access Control (OWASP A01) | Open |
+| BUG-015 | Any customer can cancel another customer's pending order | High | Broken Access Control / IDOR (OWASP A01) | Open |
+| BUG-016 | `/order/cancelItem` refunds an already cancelled item again | High | Business rule bypass / financial | Open |
+| BUG-017 | `/placeOrder` marks an order as paid without any payment | Critical | Payment bypass (OWASP A04) | Open |
 
 Application builds referenced below are commits of the TimeVault application repository.
 
@@ -768,3 +771,151 @@ A stronger fix is to destroy the customer's sessions in the session store when t
 `Admin API › customer block › a customer blocked mid-session cannot change their wishlist @security`,
 marked `test.fail('BUG-014')` while the defect is open. It needs `TEST_BLOCKABLE_USER_EMAIL` and
 `TEST_BLOCKABLE_USER_PASSWORD`, and skips without them.
+
+---
+
+## BUG-015: Any customer can cancel another customer's pending order
+- **Severity:** High
+- **Type:** Broken Access Control — Insecure Direct Object Reference (OWASP A01)
+- **Status:** Open
+- **Component:** User orders → whole-order cancellation
+- **Endpoint:** `POST /cancelOrder`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/order-api.spec.ts`)
+### Description
+`cancelOrder` loads the order with `Order.findById(req.body.orderId)` and never checks that the
+order belongs to `req.session.user`. Any logged-in customer who knows an order's id can cancel it.
+The newer `POST /order/cancelItem` filters by `{ _id: orderId, user: userId }` and is not affected.
+### Steps to reproduce
+1. As customer A, place a COD order and note its Mongo id (shown in the order page's
+   `cancelOrderItem('<orderId>', ...)` call).
+2. Log in as customer B in a separate session.
+3. As customer B, `POST /cancelOrder` with form field `orderId=<customer A's order id>`.
+4. As customer A, open the order.
+### Expected result
+Step 3 is refused (`403`/`404`) and customer A's order stays `Pending`.
+### Actual result
+- Step 3: `302 -> /order/<id>` (the success redirect).
+- Step 4: the order is `Cancelled`. Product stock was restored by customer B's request.
+- As a control, customer B's `POST /order/cancelItem` on the same order answers
+  `404 "Order not found"`.
+- Reproduced on two consecutive runs.
+### Impact
+Anyone with an account can cancel other customers' orders. For paid Online/Wallet orders the
+handler also credits the refund to the owner's wallet, so the attacker controls when refunds happen.
+Order ids appear in page source, so they are not secret.
+### Root cause
+`controllers/user/orderController.js` `cancelOrder` has no ownership filter.
+### Recommended fix
+```js
+const order = await Order.findOne({ _id: req.body.orderId, user: req.session.user });
+if (!order) return res.redirect('/orders');
+```
+### Regression test
+`Order API › another customer › cannot cancel someone else's order via /cancelOrder`, marked
+`test.fail('BUG-015')` while the defect is open. It needs `TEST_BLOCKABLE_USER_EMAIL` and
+`TEST_BLOCKABLE_USER_PASSWORD` as the second customer.
+
+---
+
+## BUG-016: `/order/cancelItem` accepts an item that is already cancelled
+- **Severity:** High (Medium for COD-only orders)
+- **Type:** Business rule bypass
+- **Status:** Open
+- **Component:** User orders → item cancellation
+- **Endpoint:** `POST /order/cancelItem`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/order-api.spec.ts`)
+### Description
+`cancelOrderItem` finds the item and sets `item.status = 'Cancelled'` without checking its current
+status or the order status. It answers success for an item that is already cancelled, inside an
+order that is already cancelled, as often as it is called.
+### Steps to reproduce
+1. Place a COD order with one item.
+2. `POST /order/cancelItem` with the order id and item id.
+3. Send the same request again.
+### Expected result
+Step 3 answers `400` with a message that the item is already cancelled.
+### Actual result
+- Step 2 and step 3 both answer
+  `200 {"success":true,"message":"Item cancelled successfully","refundAmount":4799,"newOrderStatus":"Cancelled"}`.
+- The same happens after the whole order was cancelled through `/cancelOrder`.
+- Reproduced on two consecutive runs.
+### Impact
+For COD orders the repeat only returns a misleading response. For orders with
+`paymentStatus: 'Completed'` and payment method Online or Wallet, the handler runs
+`user.wallet += refundAmount` and records a wallet credit on **every** call.
+
+Confirmed on the QA account (order `ORDA7135DDA`, Online, one unit at ₹4799):
+
+| Step | Wallet balance |
+| --- | --- |
+| Before | ₹74075 |
+| After `cancelItem` #1 | ₹78874 (+4799) |
+| After `cancelItem` #2 | ₹83673 (+9598) |
+
+Each repeat credits the full item price again, so a customer can grow their wallet without limit.
+Combined with BUG-017, the order itself was never paid.
+### Root cause
+`controllers/user/orderController.js` `cancelOrderItem` has no status guard.
+### Recommended fix
+```js
+if (order.orderStatus !== 'Pending' || (item.status && item.status !== 'Pending')) {
+  return res.status(400).json({ success: false, message: 'Only pending items can be cancelled' });
+}
+```
+### Regression test
+`Order API › an item cannot be cancelled twice @negative`, marked `test.fail('BUG-016')` while
+the defect is open.
+
+---
+
+## BUG-017: `/placeOrder` marks an order as paid without any payment
+- **Severity:** Critical
+- **Type:** Payment bypass / business logic (OWASP A04: Insecure Design)
+- **Status:** Open
+- **Component:** Checkout → place order
+- **Endpoint:** `POST /placeOrder`
+- **Environment:** Local — `http://localhost:3000`, application build `c00e6ca`
+- **Found by:** Phase 7 API tests (`tests/api/order-api.spec.ts`), manual API probe
+### Description
+`cartController.placeOrder` takes `paymentMethod` from the request body and sets
+`paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Completed'`. It never verifies a Razorpay
+payment or debits the wallet. Sending `"paymentMethod": "Online"` directly to `/placeOrder`
+creates an order the system treats as fully paid. The real flows (`/createOnlineOrder` plus
+`/onlinePaymentSuccess`, and `/walletPaymentOrder`) are bypassed.
+### Steps to reproduce
+1. Log in as a customer, add one product (₹4799) to the cart, and note the wallet balance.
+2. `POST /placeOrder` with `{ "addressId": "<saved address id>", "paymentMethod": "Online" }`.
+3. Open `/wallet`.
+4. `POST /order/cancelItem` for the new order's item.
+5. Open `/wallet` again.
+### Expected result
+Step 2 is refused (`400`): only COD may be placed through this endpoint, and Online/Wallet orders
+must go through their payment-verified routes.
+### Actual result
+- Step 2: `302 -> /orderSuccess`. An order is created and product stock drops by 1.
+- Step 3: the wallet is unchanged at ₹74075. No money was taken.
+- Step 4: `200 {"refundAmount":4799,...}`.
+- Step 5: the wallet is ₹78874. The customer received ₹4799 for an order they never paid for.
+### Impact
+Any customer can create "paid" orders for free, and then turn them into wallet credit by
+cancelling. With BUG-016, one unpaid order can be refunded repeatedly. Wallet credit is spendable
+at checkout through `/walletPaymentOrder`, so this is direct financial loss.
+### Root cause
+`placeOrder` trusts the client's `paymentMethod` and derives `paymentStatus` from it.
+### Recommended fix
+Accept only COD on this route and never mark it completed:
+```js
+if (paymentMethod !== 'COD') {
+  return res.status(400).json({ success: false, message: 'Use the online or wallet payment flow' });
+}
+// ...
+paymentStatus: 'Pending',
+```
+### Regression test
+To be added in `tests/api/order-api.spec.ts`: `POST /placeOrder` with `paymentMethod: "Online"`
+is rejected with `400`, marked `test.fail('BUG-017')` while the defect is open.
+### Test-data note
+The probe left the QA account's wallet ₹9598 higher (₹74075 → ₹83673) and Casio stock 1 unit lower
+(BUG-004). Wallet tests compare before/after values and are not affected.
