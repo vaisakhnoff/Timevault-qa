@@ -54,9 +54,12 @@ test.describe('Wishlist API @api @wishlist', () => {
     expect(res.status()).toBe(400);
   });
 
-  test.fail(
+  // BUG-007: addWishlist never checks that the product exists, so unknown ids are stored.
+  test(
     'POST /addWishlist rejects a non-existent product with 404 @negative',
+    { tag: '@known-bug' },
     async ({ wishlistApi }) => {
+      test.fail(true, 'BUG-007: /addWishlist stores product ids that do not exist');
       const res = await wishlistApi.addWishlist(INVALID_PRODUCT_ID);
       expect(res.status()).toBe(404);
     },

@@ -86,19 +86,25 @@ test.describe('Coupon API @api @coupon', () => {
     });
 
     // BUG-009: the code is pasted into new RegExp(), so regex syntax is interpreted.
-    test('treats regex wildcards as plain text @security', async ({ couponApi }) => {
-      test.fail(true, 'BUG-009: /applyCoupon interprets the code as a regular expression');
-      const res = await couponApi.applyCoupon(`${VALID.code.slice(0, 6)}.*`);
-      expect(res.status()).toBe(404);
-    });
+    test(
+      'treats regex wildcards as plain text @security',
+      { tag: '@known-bug' },
+      async ({ couponApi }) => {
+        test.fail(true, 'BUG-009: /applyCoupon interprets the code as a regular expression');
+        const res = await couponApi.applyCoupon(`${VALID.code.slice(0, 6)}.*`);
+        expect(res.status()).toBe(404);
+      },
+    );
 
-    test('answers an invalid regex character with 404, not 500 @security', async ({
-      couponApi,
-    }) => {
-      test.fail(true, 'BUG-009: an unbalanced "(" makes new RegExp() throw, answered as 500');
-      const res = await couponApi.applyCoupon('(');
-      expect(res.status()).toBe(404);
-    });
+    test(
+      'answers an invalid regex character with 404, not 500 @security',
+      { tag: '@known-bug' },
+      async ({ couponApi }) => {
+        test.fail(true, 'BUG-009: an unbalanced "(" makes new RegExp() throw, answered as 500');
+        const res = await couponApi.applyCoupon('(');
+        expect(res.status()).toBe(404);
+      },
+    );
   });
 
   test.describe('POST /removeCoupon', () => {
@@ -119,20 +125,26 @@ test.describe('Coupon API @api @coupon', () => {
   });
 
   // BUG-010: no auth.checkSession on the coupon routes, so anonymous callers can probe codes.
-  test('anonymous POST /applyCoupon is rejected with 401 @security', async ({ anonCouponApi }) => {
-    test.fail(true, 'BUG-010: /applyCoupon has no auth.checkSession');
-    const res = await anonCouponApi.applyCoupon(VALID.code);
-    expect(res.status()).toBe(401);
-  });
+  test(
+    'anonymous POST /applyCoupon is rejected with 401 @security',
+    { tag: '@known-bug' },
+    async ({ anonCouponApi }) => {
+      test.fail(true, 'BUG-010: /applyCoupon has no auth.checkSession');
+      const res = await anonCouponApi.applyCoupon(VALID.code);
+      expect(res.status()).toBe(401);
+    },
+  );
 
   // BUG-011: addCoupon validates the start date but never compares it with the end date.
-  test('admin cannot create a coupon that ends before it starts @negative', async ({
-    adminApi,
-  }) => {
-    test.fail(true, 'BUG-011: /admin/addCoupon accepts an end date before the start date');
-    const coupon = generateCoupon({ startDate: dateFromToday(1), endDate: dateFromToday(0) });
-    const res = await adminApi.addCoupon(coupon);
-    await adminApi.deleteCouponByCode(coupon.code);
-    expect(res.status()).toBe(400);
-  });
+  test(
+    'admin cannot create a coupon that ends before it starts @negative',
+    { tag: '@known-bug' },
+    async ({ adminApi }) => {
+      test.fail(true, 'BUG-011: /admin/addCoupon accepts an end date before the start date');
+      const coupon = generateCoupon({ startDate: dateFromToday(1), endDate: dateFromToday(0) });
+      const res = await adminApi.addCoupon(coupon);
+      await adminApi.deleteCouponByCode(coupon.code);
+      expect(res.status()).toBe(400);
+    },
+  );
 });

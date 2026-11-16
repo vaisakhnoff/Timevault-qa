@@ -64,68 +64,75 @@ test.describe('Admin API @api @admin', () => {
     });
 
     // BUG-012: addToCart loads the product but never checks isBlocked.
-    test('a blocked product cannot be added to the cart @negative', async ({
-      adminApi,
-      cartApi,
-    }) => {
-      test.fail(true, 'BUG-012: /addToCart accepts a product the admin has blocked');
-      await cartApi.removeFromCart(TITAN.id);
-      try {
-        await adminApi.blockProduct(TITAN.id);
-        const res = await cartApi.addToCart(TITAN.id, 1);
-        expect(res.status()).toBe(400);
-      } finally {
-        await adminApi.unblockProduct(TITAN.id);
+    test(
+      'a blocked product cannot be added to the cart @negative',
+      { tag: '@known-bug' },
+      async ({ adminApi, cartApi }) => {
+        test.fail(true, 'BUG-012: /addToCart accepts a product the admin has blocked');
         await cartApi.removeFromCart(TITAN.id);
-      }
-    });
+        try {
+          await adminApi.blockProduct(TITAN.id);
+          const res = await cartApi.addToCart(TITAN.id, 1);
+          expect(res.status()).toBe(400);
+        } finally {
+          await adminApi.unblockProduct(TITAN.id);
+          await cartApi.removeFromCart(TITAN.id);
+        }
+      },
+    );
   });
 
   test.describe('customer block', () => {
     // BUG-013: blockCustomer never checks that findByIdAndUpdate found a user.
-    test('blockCustomer returns 404 for an unknown customer @negative', async ({ adminApi }) => {
-      test.fail(true, 'BUG-013: /admin/blockCustomer reports success for an unknown id');
-      const res = await adminApi.blockCustomer(INVALID_PRODUCT_ID);
-      expect(res.status()).toBe(404);
-    });
+    test(
+      'blockCustomer returns 404 for an unknown customer @negative',
+      { tag: '@known-bug' },
+      async ({ adminApi }) => {
+        test.fail(true, 'BUG-013: /admin/blockCustomer reports success for an unknown id');
+        const res = await adminApi.blockCustomer(INVALID_PRODUCT_ID);
+        expect(res.status()).toBe(404);
+      },
+    );
 
     // BUG-014: wishlist routes lack auth.checkSession, the middleware that rejects blocked users.
-    test('a customer blocked mid-session cannot change their wishlist @security', async ({
-      adminApi,
-    }) => {
-      test.skip(
-        !envConfig.blockableUserEmail || !envConfig.blockableUserPassword,
-        'Set TEST_BLOCKABLE_USER_EMAIL and TEST_BLOCKABLE_USER_PASSWORD in .env.',
-      );
-      test.fail(
-        true,
-        'BUG-014: a blocked customer keeps wishlist write access in an existing session',
-      );
-
-      const customerId = await adminApi.findCustomerId(envConfig.blockableUserEmail);
-      expect(customerId, 'blockable customer must exist').toBeDefined();
-
-      const ctx = await createAnonymousContext();
-      const auth = new AuthApi(ctx);
-      const wishlist = new WishlistApi(ctx);
-
-      try {
-        const login = await new AuthApi(ctx).login(
-          envConfig.blockableUserEmail,
-          envConfig.blockableUserPassword,
+    test(
+      'a customer blocked mid-session cannot change their wishlist @security',
+      { tag: '@known-bug' },
+      async ({ adminApi }) => {
+        test.skip(
+          !envConfig.blockableUserEmail || !envConfig.blockableUserPassword,
+          'Set TEST_BLOCKABLE_USER_EMAIL and TEST_BLOCKABLE_USER_PASSWORD in .env.',
         );
-        expect(login.status(), 'blockable customer must be able to log in').toBe(302);
+        test.fail(
+          true,
+          'BUG-014: a blocked customer keeps wishlist write access in an existing session',
+        );
 
-        await adminApi.blockCustomer(customerId!);
-        const res = await new WishlistApi(ctx).addWishlist(TITAN.id);
-        expect(res.status()).toBe(401);
-      } finally {
-        await adminApi.unblockCustomer(customerId!);
+        const customerId = await adminApi.findCustomerId(envConfig.blockableUserEmail);
+        expect(customerId, 'blockable customer must exist').toBeDefined();
 
-        await auth.login(envConfig.blockableUserEmail, envConfig.blockableUserPassword);
-        await wishlist.removeFromWishlist(TITAN.id);
-        await ctx.dispose();
-      }
-    });
+        const ctx = await createAnonymousContext();
+        const auth = new AuthApi(ctx);
+        const wishlist = new WishlistApi(ctx);
+
+        try {
+          const login = await new AuthApi(ctx).login(
+            envConfig.blockableUserEmail,
+            envConfig.blockableUserPassword,
+          );
+          expect(login.status(), 'blockable customer must be able to log in').toBe(302);
+
+          await adminApi.blockCustomer(customerId!);
+          const res = await new WishlistApi(ctx).addWishlist(TITAN.id);
+          expect(res.status()).toBe(401);
+        } finally {
+          await adminApi.unblockCustomer(customerId!);
+
+          await auth.login(envConfig.blockableUserEmail, envConfig.blockableUserPassword);
+          await wishlist.removeFromWishlist(TITAN.id);
+          await ctx.dispose();
+        }
+      },
+    );
   });
 });

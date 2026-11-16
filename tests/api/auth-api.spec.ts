@@ -71,21 +71,23 @@ test.describe('Auth API @api @auth', () => {
 
     // BUG-008: unknown email and wrong password answer different messages (account enumeration).
 
-    test('failure message does not reveal whether the email exists @security', async ({
-      authApi,
-    }) => {
-      test.fail(true, 'BUG-008: /admin/login reveals whether an email is an admin account');
+    test(
+      'failure message does not reveal whether the email exists @security',
+      { tag: '@known-bug' },
+      async ({ authApi }) => {
+        test.fail(true, 'BUG-008: /admin/login reveals whether an email is an admin account');
 
-      const unknownEmail = (await (
-        await authApi.adminLogin(UNKNOWN_EMAIL, 'x')
-      ).json()) as AdminLoginResponse;
-      const wrongPassword = (await (
-        await authApi.adminLogin(envConfig.adminEmail, 'wrong-password')
-      ).json()) as AdminLoginResponse;
+        const unknownEmail = (await (
+          await authApi.adminLogin(UNKNOWN_EMAIL, 'x')
+        ).json()) as AdminLoginResponse;
+        const wrongPassword = (await (
+          await authApi.adminLogin(envConfig.adminEmail, 'wrong-password')
+        ).json()) as AdminLoginResponse;
 
-      expect(unknownEmail.success).toBe(false);
-      expect(wrongPassword.success).toBe(false);
-      expect(wrongPassword.message).toBe(unknownEmail.message);
-    });
+        expect(unknownEmail.success).toBe(false);
+        expect(wrongPassword.success).toBe(false);
+        expect(wrongPassword.message).toBe(unknownEmail.message);
+      },
+    );
   });
 });

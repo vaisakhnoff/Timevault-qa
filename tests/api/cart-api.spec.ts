@@ -46,16 +46,22 @@ test.describe('Cart API @api @cart', () => {
     });
 
     // BUG-006: parseInt(0) || 1 turns 0 into 1, so the line is added instead of rejected.
-    test.fail('rejects quantity 0 with 400 @negative', async ({ cartApi }) => {
+    test('rejects quantity 0 with 400 @negative', { tag: '@known-bug' }, async ({ cartApi }) => {
+      test.fail(true, 'BUG-006: /addToCart turns quantity 0 into 1 instead of rejecting it');
       const res = await cartApi.addToCart(TITAN.id, 0);
       expect(res.status()).toBe(400);
     });
 
     // BUG-006: no lower-bound check; the cart schema (min: 1) throws on save, caught as 500.
-    test.fail('rejects a negative quantity (-1) with 400 @negative', async ({ cartApi }) => {
-      const res = await cartApi.addToCart(TITAN.id, -1);
-      expect(res.status()).toBe(400);
-    });
+    test(
+      'rejects a negative quantity (-1) with 400 @negative',
+      { tag: '@known-bug' },
+      async ({ cartApi }) => {
+        test.fail(true, 'BUG-006: /addToCart answers a negative quantity with 500 instead of 400');
+        const res = await cartApi.addToCart(TITAN.id, -1);
+        expect(res.status()).toBe(400);
+      },
+    );
 
     test('returns 404 for a non-existent product', async ({ cartApi }) => {
       const res = await cartApi.addToCart(INVALID_PRODUCT_ID, 1);
@@ -78,9 +84,11 @@ test.describe('Cart API @api @cart', () => {
     });
 
     // BUG-005: updateCart compares only against stock, so the 4-per-product rule is bypassed.
-    test.fail(
+    test(
       'rejects quantity above the per-product limit (5) with 400 @negative',
+      { tag: '@known-bug' },
       async ({ cartApi }) => {
+        test.fail(true, 'BUG-005: /updateCart ignores the 4-per-product limit');
         const res = await cartApi.updateCart([
           { productId: TITAN.id, quantity: TITAN.maxAllowed + 1 },
         ]);

@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "check": "npm run typecheck && npm run lint && npm run format:check"
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "test:api:clean": "playwright test --project=api --grep-invert @known-bug",
+    "test:known-bugs": "playwright test --project=api --grep @known-bug --reporter=list"
   },
   "keywords": [
     "qa",
