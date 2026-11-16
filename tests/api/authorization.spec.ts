@@ -29,4 +29,18 @@ test.describe('Authorization - protected endpoints reject anonymous callers @api
     expect(res.status()).toBe(302);
     expect(res.headers()['location']).toContain('/admin/login');
   });
+
+  // Positive counterpart of BUG-001: the fix must not lock out a real admin.
+  test('admin session gets canceled/returned chart data (200 JSON)', async ({ adminApi }) => {
+    const res = await adminApi.getCanceledAndReturnedData();
+    expect(res.status()).toBe(200);
+    const body = (await res.json()) as {
+      labels: string[];
+      canceledData: number[];
+      returnedData: number[];
+    };
+    expect(Array.isArray(body.labels)).toBe(true);
+    expect(body.canceledData).toHaveLength(body.labels.length);
+    expect(body.returnedData).toHaveLength(body.labels.length);
+  });
 });

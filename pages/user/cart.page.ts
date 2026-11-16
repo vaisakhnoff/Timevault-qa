@@ -67,4 +67,12 @@ export class CartPage {
       await this.goto();
     }
   }
+
+  rowFor(productId: string): Locator {
+    return this.page.locator(`tr[data-product-id="${productId}"]`);
+  }
+
+  quantityFor(productId: string): Locator {
+    return this.rowFor(productId).locator('.qty');
+  }
 }
