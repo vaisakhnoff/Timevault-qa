@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { expect, Page, Locator } from '@playwright/test';
 import { SweetAlertComponent } from '../../components/sweetalert.component';
 
 export class CartPage {
@@ -9,6 +9,7 @@ export class CartPage {
   readonly increaseButton: Locator;
   readonly decreaseButton: Locator;
   readonly removeButton: Locator;
+  readonly itemTotals: Locator;
   readonly subtotal: Locator;
 
   constructor(page: Page) {
@@ -20,6 +21,7 @@ export class CartPage {
     this.increaseButton = page.locator('.increase');
     this.decreaseButton = page.locator('.reduced');
     this.removeButton = page.locator('.remove-btn');
+    this.itemTotals = page.locator('.item-total');
     this.subtotal = page.locator('#subtotal');
   }
 
@@ -31,11 +33,29 @@ export class CartPage {
     return this.cartItems.count();
   }
 
+  async increaseFirstQuantity(): Promise<void> {
+    const updated = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/updateCart') && response.request().method() === 'POST',
+    );
+
+    await this.increaseButton.first().click();
+    await updated;
+  }
+
   async removeFirstItem(): Promise<void> {
     await this.removeButton.first().click();
 
-    await this.alert.confirm();
+    const removed = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/removeFromCart') && response.request().method() === 'POST',
+    );
 
+    await this.alert.confirm();
+    await removed;
+
+    await expect(this.alert.title).toHaveText('Removed!');
+    await expect(this.alert.popup).toBeHidden();
     await this.page.waitForLoadState('domcontentloaded').catch(() => {});
   }
 
@@ -46,5 +66,13 @@ export class CartPage {
       await this.removeFirstItem();
       await this.goto();
     }
+  }
+
+  rowFor(productId: string): Locator {
+    return this.page.locator(`tr[data-product-id="${productId}"]`);
+  }
+
+  quantityFor(productId: string): Locator {
+    return this.rowFor(productId).locator('.qty');
   }
 }

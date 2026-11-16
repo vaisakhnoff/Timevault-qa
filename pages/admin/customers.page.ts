@@ -37,7 +37,13 @@ export class CustomersPage {
   async blockByEmail(email: string): Promise<void> {
     await this.rowByEmail(email).locator('.blockCustomer').click();
 
+    const blocked = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/blockCustomer') && response.request().method() === 'GET',
+    );
+
     await this.alert.confirm();
+    await blocked;
 
     await expect(this.alert.title).toHaveText('User Blocked');
 
@@ -49,7 +55,13 @@ export class CustomersPage {
   async unblockByEmail(email: string): Promise<void> {
     await this.rowByEmail(email).locator('.unblockCustomer').click();
 
+    const unblocked = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/unblockCustomer') && response.request().method() === 'GET',
+    );
+
     await this.alert.confirm();
+    await unblocked;
 
     await expect(this.alert.title).toHaveText('User Unblocked');
     await this.alert.dismiss();

@@ -41,10 +41,9 @@ export class HeaderComponent {
   async logout(): Promise<void> {
     await this.openUserMenu();
 
-    const logoutLink = this.root.getByRole('link', {
-      name: 'Logout',
-      exact: true,
-    });
+    const logoutLink = this.root.getByText('Logout', { exact: true });
+
+    await expect(logoutLink).toBeVisible();
 
     await logoutLink.click();
   }

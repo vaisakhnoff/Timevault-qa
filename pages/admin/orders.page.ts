@@ -14,6 +14,9 @@ export class OrdersPage {
 
   readonly detailStatusSelect: Locator;
   readonly detailUpdateButton: Locator;
+  readonly detailPageTitle: Locator;
+  readonly userInformationHeading: Locator;
+  readonly itemsHeading: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -29,6 +32,9 @@ export class OrdersPage {
 
     this.detailStatusSelect = page.locator('select[name="newStatus"]');
     this.detailUpdateButton = page.getByRole('button', { name: 'Update' });
+    this.detailPageTitle = page.getByRole('heading', { name: 'Order Details' });
+    this.userInformationHeading = page.getByRole('heading', { name: 'User Information' });
+    this.itemsHeading = page.getByRole('heading', { name: 'Items in Order' });
   }
 
   async goto(): Promise<void> {
@@ -51,6 +57,11 @@ export class OrdersPage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
+  async openOrderById(orderId: string): Promise<void> {
+    await this.page.locator(`a[href="/admin/order/${orderId}"]`).click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+
   async updateStatus(newStatus: string): Promise<void> {
     await this.detailStatusSelect.selectOption(newStatus);
     await this.detailUpdateButton.click();
@@ -59,8 +70,11 @@ export class OrdersPage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
-  async getNextStatus(): Promise<string> {
+  async getNextStatus(): Promise<string | undefined> {
     const options = await this.detailStatusSelect.locator('option').allInnerTexts();
-    return options.map((o) => o.trim()).filter((o) => o && o !== 'Select new status')[0];
+
+    return options
+      .map((option) => option.trim())
+      .find((option) => option && option !== 'Select new status');
   }
 }

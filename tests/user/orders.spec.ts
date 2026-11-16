@@ -15,3 +15,22 @@ test.describe('TimeVault Orders Tests', () => {
     }
   });
 });
+
+test.describe('TimeVault Order Detail Tests', () => {
+  test('@regression order details show items, address, and payment summary', async ({
+    ordersPage,
+    orderDetailsPage,
+  }) => {
+    await ordersPage.goto();
+
+    const count = await ordersPage.getOrderCount();
+    test.skip(count === 0, 'No order history is available for the test user.');
+
+    await ordersPage.orderCards.first().getByRole('link', { name: 'View Details' }).click();
+
+    await expect(orderDetailsPage.pageTitle).toBeVisible();
+    await expect(orderDetailsPage.itemRows.first()).toBeVisible();
+    await expect(orderDetailsPage.shippingAddressHeading).toBeVisible();
+    await expect(orderDetailsPage.paymentSummaryHeading).toBeVisible();
+  });
+});

@@ -9,6 +9,16 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
+ * Specs that mutate state shared by the single QA customer account (cart, wishlist,
+ * address, orders, wallet) or the COD test product. They run in one single-worker
+ * project so they never overlap. The remaining user specs only read data and stay parallel.
+ */
+const sharedStateSpecs = [
+  /tests\/e2e\/.*\.spec\.ts/,
+  /tests\/user\/(cart|wishlist|checkout|address|product-details|shop)\.spec\.ts/,
+];
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -56,7 +66,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: /tests\/admin\//,
+      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -73,6 +83,34 @@ export default defineConfig({
         storageState: 'playwright/.auth/admin.json',
       },
       dependencies: ['setup-admin'],
+    },
+
+    // API suite: no page, only HTTP via APIRequestContext. The built-in `request`
+    // fixture inherits the user storageState, so it carries the user's session cookie.
+    // Admin calls open their own context from admin.json (see api/request-context.ts).
+    // workers: 1 because cart/wishlist specs mutate the single QA account.
+    {
+      name: 'api',
+      testMatch: /tests\/api\/.*\.spec\.ts/,
+      use: {
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user', 'setup-admin'],
+      workers: 1,
+    },
+
+    // Shared-state lane: customer specs that mutate the one QA account, plus cross-role
+    // lifecycle specs that open an admin context from admin.json inside the same test.
+    // workers: 1 limits THIS project to one test at a time.
+    {
+      name: 'shared-state',
+      testMatch: sharedStateSpecs,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user', 'setup-admin', 'api'],
+      workers: 1,
     },
 
     // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.

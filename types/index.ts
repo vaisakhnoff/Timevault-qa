@@ -43,4 +43,6 @@ export interface NewUserData {
   email: string;
   phoneNumber: string;
   password: string;
+  confirmPassword: string;
+  referalCode?: string;
 }
