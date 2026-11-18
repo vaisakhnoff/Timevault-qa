@@ -46,3 +46,13 @@ export interface NewUserData {
   confirmPassword: string;
   referalCode?: string;
 }
+
+export type NewProductData = {
+  name: string;
+  description: string;
+  brand: string;
+  category: string;
+  regularPrice: number;
+  salePrice: number;
+  quantity: number;
+};

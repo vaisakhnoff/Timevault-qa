@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { Address, CouponData, NewUserData } from '../types';
+import { Address, CouponData, NewUserData, NewProductData } from '../types';
 import { dateFromToday } from '../utils/helpers';
+import { CATALOG } from './api-test-data';
 
 export function generateAddress(): Address {
   return {
@@ -42,5 +43,18 @@ export function generateUser(): NewUserData {
     password,
     confirmPassword: password,
     referalCode: '',
+  };
+}
+
+export function generateProduct(overrides: Partial<NewProductData> = {}): NewProductData {
+  return {
+    name: `QA Lifecycle ${faker.string.alphanumeric(10)}`,
+    description: 'Temporary product created by an automated test. Safe to delete.',
+    brand: CATALOG.brand,
+    category: CATALOG.category,
+    regularPrice: 5000,
+    salePrice: 4500,
+    quantity: 5,
+    ...overrides,
   };
 }
