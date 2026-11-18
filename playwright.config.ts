@@ -18,6 +18,9 @@ const sharedStateSpecs = [
   /tests\/user\/(cart|wishlist|checkout|address|product-details|shop)\.spec\.ts/,
 ];
 
+/** Specs that run elsewhere: admin (own session), API (own project) and the shared-state lane. */
+const userProjectIgnore = [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs];
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -66,7 +69,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs],
+      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs, ...userProjectIgnore],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -113,17 +116,29 @@ export default defineConfig({
       workers: 1,
     },
 
-    // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.
+    // Cross-browser smoke: the same user specs as chromium, @smoke only, logged in as the user.
+    // Admin and shared-state smoke stay on Chromium (single admin browser, shared cart).
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: userProjectIgnore,
       grep: /@smoke/,
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user'],
     },
-
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: userProjectIgnore,
       grep: /@smoke/,
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user'],
     },
 
     /* Test against mobile viewports. */
