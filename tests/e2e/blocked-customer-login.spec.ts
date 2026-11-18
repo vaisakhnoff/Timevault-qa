@@ -4,7 +4,7 @@ import { CustomersPage } from '../../pages/admin/customers.page';
 import { LoginPage } from '../../pages/user/login.page';
 import { test, expect } from '../../fixtures/e2e.fixture';
 
-test.describe('Blocked customer login', () => {
+test.describe('Blocked customer login @regression', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('@e2e @security blocked customer cannot log in', async ({ adminPage, browser }) => {

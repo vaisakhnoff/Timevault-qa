@@ -51,7 +51,9 @@ test.describe('User Authentication Tests', () => {
   });
 
   for (const path of protectedPaths) {
-    test(`@auth @security anonymous visit to ${path} redirects to login`, async ({ page }) => {
+    test(` @regression @auth @security anonymous visit to ${path} redirects to login`, async ({
+      page,
+    }) => {
       await page.goto(path);
 
       await expect(page).toHaveURL(/\/login/);

@@ -13,11 +13,10 @@ const adminPaths = [
   '/admin/return-requests',
 ];
 
-// A password that passes the browser-side length rule (8+ characters) but is wrong.
 const wrongPassword = () => faker.internet.password({ length: 12 });
 const unknownAdminEmail = () => `${faker.string.uuid()}@example.com`;
 
-test.describe('Admin login, logged out', () => {
+test.describe('Admin login, logged out @regression', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('@admin @auth @negative invalid email format shows an inline error', async ({
@@ -126,7 +125,7 @@ test.describe('Admin login, logged in as admin', () => {
   });
 });
 
-test.describe('Customer session on admin pages', () => {
+test.describe('Customer session on admin pages @regression ', () => {
   test.use({ storageState: 'playwright/.auth/user.json' });
 
   for (const path of adminPaths) {

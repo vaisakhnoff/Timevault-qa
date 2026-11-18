@@ -12,7 +12,7 @@ const adminPaths = [
   '/admin/return-requests',
 ];
 
-test.describe('Customer session on admin pages', () => {
+test.describe('Customer session on admin pages @regression', () => {
   for (const path of adminPaths) {
     test(`@auth @security a logged-in customer cannot open ${path}`, async ({ page }) => {
       await page.goto(path);
