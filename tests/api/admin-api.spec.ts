@@ -8,7 +8,7 @@ import envConfig from '../../config/env.config';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Admin API @api @admin', () => {
+test.describe('Admin API @regression @api @admin', () => {
   test.describe('role boundary: customer session on admin endpoints @security', () => {
     test('GET /admin/dashboard-data redirects a customer to admin login', async ({
       userAdminApi,

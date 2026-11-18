@@ -116,7 +116,7 @@ test.describe('Admin login, logged out @regression', () => {
 });
 
 test.describe('Admin login, logged in as admin', () => {
-  test('@admin @auth @regression logged-in admin opening the login page goes to the dashboard', async ({
+  test('@admin @auth @smoke logged-in admin opening the login page goes to the dashboard', async ({
     page,
   }) => {
     await page.goto('/admin/login');

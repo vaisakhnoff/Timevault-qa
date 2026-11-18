@@ -4,7 +4,7 @@ test.afterEach(async ({ cartPage }) => {
   await cartPage.removeAllItems();
 });
 
-test('@regression product details page shows product info', async ({ productDetailsPage }) => {
+test('@smoke product details page shows product info', async ({ productDetailsPage }) => {
   await productDetailsPage.goto('6aad1146c76606074021e7ec');
   await expect(productDetailsPage.productName).toBeVisible();
   await expect(productDetailsPage.currentPrice).toBeVisible();

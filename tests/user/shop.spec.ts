@@ -1,8 +1,8 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { isSortedAscending, isSortedDescending } from '../../utils/helpers';
 
-test.describe('@regression TimeVault Shop Tests', () => {
-  test('Shop page should display products', async ({ shopPage }) => {
+test.describe('TimeVault Shop Tests', () => {
+  test('@smoke Shop page should display products', async ({ shopPage }) => {
     await shopPage.goto();
 
     const productCount = await shopPage.getProductCount();

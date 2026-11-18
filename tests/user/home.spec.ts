@@ -7,7 +7,7 @@ test.describe('TimeVault Home Tests', () => {
     await expect(homePage.page).toHaveTitle(/TIME VAULT/i);
   });
 
-  test('@regression latest releases shows one to four products', async ({ homePage }) => {
+  test('@smoke latest releases shows one to four products', async ({ homePage }) => {
     await homePage.goto();
 
     await expect(homePage.latestReleasesHeading).toBeVisible();

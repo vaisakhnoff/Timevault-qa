@@ -60,7 +60,7 @@ test.describe('User Authentication Tests', () => {
     });
   }
 
-  test('@auth @regression logout ends the user session', async ({ page, loginPage, header }) => {
+  test('@auth @smoke logout ends the user session', async ({ page, loginPage, header }) => {
     await loginPage.goto();
     await loginPage.login(envConfig.userEmail, envConfig.userPassword);
 
