@@ -22,8 +22,12 @@ const sharedStateSpecs = [
 const userProjectIgnore = [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs];
 
 /**
- * See https://playwright.dev/docs/test-configuration.
+ * The full run needs `api` to finish before `shared-state`, because both change the QA user's cart.
+ * A smoke run (SMOKE=1) has no API tests, so it skips that dependency. Otherwise all 58 API tests,
+ * including the stock-consuming order tests, would run as part of smoke.
  */
+const isSmokeRun = !!process.env.SMOKE;
+
 export default defineConfig({
   testDir: './tests',
   /* Max time one test can run. Generous enough for remote (Render) if BASE_URL points there. */
@@ -112,7 +116,9 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup-user', 'setup-admin', 'api'],
+      dependencies: isSmokeRun
+        ? ['setup-user', 'setup-admin']
+        : ['setup-user', 'setup-admin', 'api'],
       workers: 1,
     },
 
