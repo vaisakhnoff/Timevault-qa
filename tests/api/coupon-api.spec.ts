@@ -11,7 +11,7 @@ const HIGH_MIN = generateCoupon({ offerPrice: 100, minPrice: 9_000_000, maxPrice
 
 const EXPIRED = generateCoupon({ endDate: dateFromToday(-1) });
 
-test.describe('Coupon API @api @coupon', () => {
+test.describe('Coupon API @regression @api @coupon', () => {
   test.beforeAll(async ({ workerAdminApi }) => {
     for (const coupon of [VALID, HIGH_MIN, EXPIRED]) {
       const res = await workerAdminApi.addCoupon(coupon);

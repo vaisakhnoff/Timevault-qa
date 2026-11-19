@@ -3,7 +3,7 @@ import { PRODUCTS } from '../../data/api-test-data';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Authorization - protected endpoints reject anonymous callers @api @security', () => {
+test.describe('Authorization - protected endpoints reject anonymous callers @regression @api @security', () => {
   test('POST /addToCart without a session is rejected (401)', async ({ anonCartApi }) => {
     const res = await anonCartApi.addToCart(TITAN.id, 1);
     expect(res.status()).toBe(401);

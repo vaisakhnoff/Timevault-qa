@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures/admin.fixture';
 
 test.describe('TimeVault Admin Order Tests', () => {
-  test('@regression orders list loads with orders or empty state', async ({ ordersPage }) => {
+  test('@smoke orders list loads with orders or empty state', async ({ ordersPage }) => {
     await ordersPage.goto();
     await expect(ordersPage.pageTitle).toBeVisible();
 

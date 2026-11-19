@@ -8,7 +8,7 @@ import envConfig from '../../config/env.config';
 
 const hasSecondCustomer = !!envConfig.blockableUserEmail && !!envConfig.blockableUserPassword;
 
-test.describe('Order API @api @order', () => {
+test.describe('Order API @regression @api @order', () => {
   test('POST placeOrder empties the cart, so a second order is rejected', async ({
     pendingOrder,
     orderApi,

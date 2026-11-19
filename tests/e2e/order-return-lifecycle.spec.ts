@@ -9,7 +9,7 @@ import {
 } from '../../utils/checkout.helpers';
 import { parsePrice } from '../../utils/helpers';
 
-test.describe('COD order and return lifecycle', () => {
+test.describe('COD order and return lifecycle @regression', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('@e2e user order is delivered, returned, and refunded', async ({

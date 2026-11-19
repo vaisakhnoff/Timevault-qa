@@ -1,5 +1,5 @@
 import { APIRequestContext, APIResponse } from '@playwright/test';
-import { CouponData } from '../types';
+import { CouponData, NewProductData } from '../types';
 
 export type DashboardData = {
   revenue: number;
@@ -37,6 +37,56 @@ export class AdminApi {
         maxPrice: coupon.maxPrice,
       },
     });
+  }
+
+  // The add-product form posts multipart/form-data. Multipart values must be strings.
+  // Pass `image` only for real creates: addProducts uploads images to Cloudinary BEFORE
+  // validating category/brand, so a failing request with an image leaves an orphaned upload.
+  addProduct(product: NewProductData, image?: Buffer): Promise<APIResponse> {
+    return this.request.post('/admin/addProducts', {
+      multipart: {
+        productName: product.name,
+        description: product.description,
+        brand: product.brand,
+        category: product.category,
+        regularPrice: String(product.regularPrice),
+        salePrice: String(product.salePrice),
+        quantity: String(product.quantity),
+        ...(image
+          ? { images: { name: 'qa-product.png', mimeType: 'image/png', buffer: image } }
+          : {}),
+      },
+    });
+  }
+
+  // addProducts returns no id. Each row on /admin/products links to /admin/editProduct/<id>.
+  async findProductId(name: string): Promise<string | undefined> {
+    const html = await (
+      await this.request.get('/admin/products', { params: { search: name } })
+    ).text();
+    return html.match(new RegExp(`${escapeRegExp(name)}[\\s\\S]*?editProduct/([a-f0-9]{24})`))?.[1];
+  }
+
+  // Proof of deletion: the id's edit link is gone. Never check for the name, because the
+  // search box echoes the search term back into the page.
+  async productExists(id: string): Promise<boolean> {
+    const html = await (await this.request.get('/admin/products')).text();
+    return html.includes(`editProduct/${id}`);
+  }
+
+  // Creates a product and returns its id. Throws, so a failed setup is reported as setup.
+  async createProduct(product: NewProductData, image?: Buffer): Promise<string> {
+    const res = await this.addProduct(product, image);
+    if (res.status() !== 200)
+      throw new Error(`addProducts failed with ${res.status()}: ${await res.text()}`);
+    const id = await this.findProductId(product.name);
+    if (!id) throw new Error(`created product "${product.name}" not found in the admin list`);
+    return id;
+  }
+
+  // 200 deleted; 400 invalid id; 404 unknown; 409 product has orders. Cart and wishlist lines are removed too.
+  deleteProduct(id: string): Promise<APIResponse> {
+    return this.request.delete(`/admin/deleteProduct/${id}`, { maxRedirects: 0 });
   }
 
   async findCouponId(couponCode: string): Promise<string | undefined> {

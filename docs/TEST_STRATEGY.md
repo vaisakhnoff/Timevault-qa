@@ -101,9 +101,34 @@ TimeVault authenticates with a **session cookie**, not a token, so the reusable 
 
 ## 10. Test organisation and tagging
 
-Folders: `tests/user`, `tests/admin`, `tests/api`, `tests/e2e`. Tags go in test titles: `@smoke`, `@regression`, `@sanity`, `@api`, `@e2e`, `@user`, `@admin`, `@negative`, `@boundary`, `@security`, per-module tags (`@auth`, `@cart`, `@order`).
+Folders: `tests/user`, `tests/admin`, `tests/api`, `tests/e2e`.
 
-Run selection by tag (`--grep`). Smoke runs on every push; regression nightly.
+**Suite tag (exactly one per test):**
+
+| Tag | Meaning | Size |
+| --- | --- | --- |
+| `@smoke` | App is usable: login, home, shop, product, cart, checkout, orders, logout, admin login/dashboard/products/orders. Read-only except one cart add. | 15 tests (29 runs incl. Firefox and WebKit) |
+| `@regression` | Everything else. A regression run executes the whole suite, smoke included. | rest |
+
+Every test must carry one of them. `npx playwright test --grep-invert "@smoke|@regression" --list` must list only the two setup files.
+
+**Optional tags:** type (`@api`, `@e2e`, `@hybrid`, `@negative`, `@boundary`, `@security`) and module (`@auth`, `@cart`, `@order`, `@coupon`, `@wishlist`, `@admin`). Tags go at the start of a test title or the end of a `describe` title. A describe tag applies to every test inside it.
+
+**`@known-bug`:** set with `{ tag: '@known-bug' }` on tests that assert correct behaviour for an open defect. Each starts with `test.fail(true, 'BUG-xxx: ...')`. When such a test reports "Expected to fail, but passed", the bug is fixed: remove `test.fail` and mark the bug Fixed in BUG_REPORTS.md.
+
+**Scripts:**
+
+| Script | Runs | When |
+| --- | --- | --- |
+| `npm run test:smoke` | `SMOKE=1 --grep @smoke`, all three browsers | Every push / every CI build (~50 s) |
+| `npm run test:regression` | Full suite | Before merging; nightly |
+| `npm run test:e2e` | `@e2e` journeys | After changing a business flow |
+| `npm run test:api:clean` | API tests without `@known-bug` | API changes; every failure is real |
+| `npm run test:known-bugs` | Only `@known-bug` tests | After an app fix, to see which bugs closed |
+
+`SMOKE=1` drops the `api` dependency of `shared-state`. Without it, Playwright would run all API tests (including stock-consuming order tests) as a dependency of the four shared-state smoke tests.
+
+**Cross-browser:** Firefox and WebKit run only the user-project `@smoke` tests, logged in with `user.json`. Admin and shared-state smoke stay on Chromium (one admin browser, one shared customer cart).
 
 ## 11. Parallelism and isolation
 

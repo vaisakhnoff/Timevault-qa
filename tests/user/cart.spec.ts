@@ -4,7 +4,7 @@ import { parsePrice } from '../../utils/helpers';
 test.describe.configure({ mode: 'serial' });
 
 test.describe('TimeVault Cart Tests', () => {
-  test('@regression item added from product page appears in cart', async ({
+  test('@smoke item added from product page appears in cart', async ({
     cartPage,
     productDetailsPage,
   }) => {
