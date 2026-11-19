@@ -2,6 +2,7 @@ import { BrowserContext, Page } from '@playwright/test';
 import path from 'path';
 import { test as base } from './base.fixture';
 import { CartApi } from '../api/cart.api';
+import { AdminApi } from '../api/admin.api';
 
 const adminStorageState = path.resolve(__dirname, '../playwright/.auth/admin.json');
 
@@ -9,6 +10,7 @@ type E2eFixtures = {
   adminContext: BrowserContext;
   adminPage: Page;
   cartApi: CartApi;
+  adminApi: AdminApi;
 };
 
 export const test = base.extend<E2eFixtures>({
@@ -28,6 +30,10 @@ export const test = base.extend<E2eFixtures>({
 
   cartApi: async ({ page }, use) => {
     await use(new CartApi(page.request));
+  },
+
+  adminApi: async ({ adminContext }, use) => {
+    await use(new AdminApi(adminContext.request));
   },
 });
 

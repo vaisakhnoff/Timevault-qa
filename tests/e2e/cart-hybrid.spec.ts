@@ -3,7 +3,7 @@ import { PRODUCTS } from '../../data/api-test-data';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Cart hybrid: API setup, UI check @e2e @hybrid @cart', () => {
+test.describe('Cart hybrid: API setup, UI check @regression @e2e @hybrid @cart', () => {
   test.beforeEach(async ({ cartApi }) => {
     await cartApi.removeFromCart(TITAN.id);
   });

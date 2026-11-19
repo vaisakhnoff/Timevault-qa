@@ -14,7 +14,7 @@ test.describe('TimeVault Checkout Tests', () => {
     await cartPage.removeAllItems();
   });
 
-  test('@regression checkout shows cart summary and saved address', async ({
+  test('@smoke checkout shows cart summary and saved address', async ({
     productDetailsPage,
     cartPage,
     checkoutPage,

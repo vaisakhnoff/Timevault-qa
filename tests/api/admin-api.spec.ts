@@ -5,10 +5,13 @@ import { WishlistApi } from '../../api/wishlist.api';
 import { createAnonymousContext } from '../../api/request-context';
 import { PRODUCTS, INVALID_PRODUCT_ID } from '../../data/api-test-data';
 import envConfig from '../../config/env.config';
+import { generateProduct } from '../../data/generators';
+import { COD_SAFE_PRODUCT } from '../../data/checkout-test-data';
+import { TINY_PNG } from '../../data/api-test-data';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Admin API @api @admin', () => {
+test.describe('Admin API @regression @api @admin', () => {
   test.describe('role boundary: customer session on admin endpoints @security', () => {
     test('GET /admin/dashboard-data redirects a customer to admin login', async ({
       userAdminApi,
@@ -24,6 +27,72 @@ test.describe('Admin API @api @admin', () => {
       const res = await userAdminApi.blockProduct(TITAN.id);
       expect(res.status()).toBe(302);
       expect(res.headers()['location']).toBe('/admin/login');
+    });
+  });
+
+  test.describe('product create and delete', () => {
+    test('a created product can be deleted, and is then gone', async ({ adminApi }) => {
+      const id = await adminApi.createProduct(generateProduct(), TINY_PNG);
+      try {
+        const res = await adminApi.deleteProduct(id);
+        expect(res.status()).toBe(200);
+        expect(await res.json()).toEqual({
+          success: true,
+          message: 'Product deleted successfully',
+        });
+
+        expect(await adminApi.productExists(id), 'admin list after delete').toBe(false);
+        expect((await adminApi.deleteProduct(id)).status(), 'second delete').toBe(404);
+      } finally {
+        await adminApi.deleteProduct(id); // no-op when the test already deleted it
+      }
+    });
+
+    test('deleteProduct rejects an invalid id with 400 @negative', async ({ adminApi }) => {
+      expect((await adminApi.deleteProduct('not-an-id')).status()).toBe(400);
+    });
+
+    test('deleteProduct returns 404 for an unknown product @negative', async ({ adminApi }) => {
+      expect((await adminApi.deleteProduct(INVALID_PRODUCT_ID)).status()).toBe(404);
+    });
+
+    // RISK: if this guard ever breaks, the request really deletes COD_SAFE_PRODUCT, which most order
+    // and checkout specs depend on. It has to be re-created by hand. That loss is the defect the test catches.
+    test('a product with orders cannot be deleted (409) @negative', async ({ adminApi }) => {
+      const res = await adminApi.deleteProduct(COD_SAFE_PRODUCT.id);
+      expect(res.status()).toBe(409);
+      expect(await adminApi.productExists(COD_SAFE_PRODUCT.id), 'COD product must survive').toBe(
+        true,
+      );
+    });
+
+    test('deleteProduct redirects a customer to admin login @security', async ({
+      userAdminApi,
+    }) => {
+      const res = await userAdminApi.deleteProduct(INVALID_PRODUCT_ID);
+      expect(res.status()).toBe(302);
+      expect(res.headers()['location']).toBe('/admin/login');
+    });
+
+    // No image: these fail validation, and an image would be uploaded before that check runs.
+    test('addProducts rejects a duplicate name with 400 @negative', async ({ adminApi }) => {
+      const product = generateProduct();
+      const id = await adminApi.createProduct(product);
+      try {
+        const res = await adminApi.addProduct(product);
+        expect(res.status()).toBe(400);
+        expect(((await res.json()) as { message: string }).message).toBe(
+          'Product with this name already exists',
+        );
+      } finally {
+        await adminApi.deleteProduct(id);
+      }
+    });
+
+    test('addProducts rejects an unknown category with 400 @negative', async ({ adminApi }) => {
+      const res = await adminApi.addProduct(generateProduct({ category: 'No Such Category QA' }));
+      expect(res.status()).toBe(400);
+      expect(((await res.json()) as { message: string }).message).toBe('Invalid category selected');
     });
   });
 

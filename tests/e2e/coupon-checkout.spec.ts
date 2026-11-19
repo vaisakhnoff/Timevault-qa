@@ -3,7 +3,7 @@ import { generateCoupon } from '../../data/generators';
 import { test, expect } from '../../fixtures/e2e.fixture';
 import { ensureCheckoutAddress, prepareCartForCodCheckout } from '../../utils/checkout.helpers';
 
-test.describe('Checkout coupon integration', () => {
+test.describe('Checkout coupon integration @regression ', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('@e2e a temporary admin coupon applies and is removed at checkout', async ({

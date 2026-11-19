@@ -1,7 +1,7 @@
 import { COD_SAFE_PRODUCT } from '../../data/checkout-test-data';
 import { test, expect } from '../../fixtures/e2e.fixture';
 
-test.describe('Admin product block visibility', () => {
+test.describe('Admin product block visibility @regression', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('@e2e blocked product is hidden from shop search and then restored', async ({

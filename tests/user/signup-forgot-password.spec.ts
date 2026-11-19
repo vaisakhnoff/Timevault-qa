@@ -36,7 +36,7 @@ const validationCases = [
   },
 ] as const;
 
-test.describe('Signup and Forgot Password Tests', () => {
+test.describe('Signup and Forgot Password Tests @regression', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('@auth @negative existing email is rejected during signup', async ({ signupPage }) => {

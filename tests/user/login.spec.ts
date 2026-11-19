@@ -51,14 +51,16 @@ test.describe('User Authentication Tests', () => {
   });
 
   for (const path of protectedPaths) {
-    test(`@auth @security anonymous visit to ${path} redirects to login`, async ({ page }) => {
+    test(` @regression @auth @security anonymous visit to ${path} redirects to login`, async ({
+      page,
+    }) => {
       await page.goto(path);
 
       await expect(page).toHaveURL(/\/login/);
     });
   }
 
-  test('@auth @regression logout ends the user session', async ({ page, loginPage, header }) => {
+  test('@auth @smoke logout ends the user session', async ({ page, loginPage, header }) => {
     await loginPage.goto();
     await loginPage.login(envConfig.userEmail, envConfig.userPassword);
 

@@ -4,7 +4,7 @@ import { PRODUCTS, INVALID_PRODUCT_ID } from '../../data/api-test-data';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Cart API @api @cart', () => {
+test.describe('Cart API @regression @api @cart', () => {
   // Every test starts and ends with TITAN absent from the shared QA user's cart.
   test.beforeEach(async ({ cartApi }) => {
     await cartApi.removeFromCart(TITAN.id);

@@ -4,7 +4,7 @@ import { PRODUCTS, INVALID_PRODUCT_ID } from '../../data/api-test-data';
 
 const TITAN = PRODUCTS.titan;
 
-test.describe('Wishlist API @api @wishlist', () => {
+test.describe('Wishlist API @regression @api @wishlist', () => {
   test.beforeEach(async ({ wishlistApi }) => {
     await wishlistApi.removeFromWishlist(TITAN.id);
   });

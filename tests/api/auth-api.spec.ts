@@ -4,7 +4,7 @@ import { INVALID_PRODUCT_ID } from '../../data/api-test-data';
 import envConfig from '../../config/env.config';
 const UNKNOWN_EMAIL = 'nobody.qa@example.com';
 
-test.describe('Auth API @api @auth', () => {
+test.describe('Auth API @regression  @api @auth', () => {
   test.describe('POST /login (customer)', () => {
     test('valid credentials redirect home and set an HttpOnly session cookie', async ({
       authApi,

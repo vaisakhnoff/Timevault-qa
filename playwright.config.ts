@@ -18,9 +18,16 @@ const sharedStateSpecs = [
   /tests\/user\/(cart|wishlist|checkout|address|product-details|shop)\.spec\.ts/,
 ];
 
+/** Specs that run elsewhere: admin (own session), API (own project) and the shared-state lane. */
+const userProjectIgnore = [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs];
+
 /**
- * See https://playwright.dev/docs/test-configuration.
+ * The full run needs `api` to finish before `shared-state`, because both change the QA user's cart.
+ * A smoke run (SMOKE=1) has no API tests, so it skips that dependency. Otherwise all 58 API tests,
+ * including the stock-consuming order tests, would run as part of smoke.
  */
+const isSmokeRun = !!process.env.SMOKE;
+
 export default defineConfig({
   testDir: './tests',
   /* Max time one test can run. Generous enough for remote (Render) if BASE_URL points there. */
@@ -66,7 +73,7 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs],
+      testIgnore: [/tests\/admin\//, /tests\/api\//, ...sharedStateSpecs, ...userProjectIgnore],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -109,21 +116,35 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup-user', 'setup-admin', 'api'],
+      dependencies: isSmokeRun
+        ? ['setup-user', 'setup-admin']
+        : ['setup-user', 'setup-admin', 'api'],
       workers: 1,
     },
 
-    // Cross-browser coverage: only @smoke tests, logged-out. Keeps runs fast.
+    // Cross-browser smoke: the same user specs as chromium, @smoke only, logged in as the user.
+    // Admin and shared-state smoke stay on Chromium (single admin browser, shared cart).
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: userProjectIgnore,
       grep: /@smoke/,
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user'],
     },
-
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: userProjectIgnore,
       grep: /@smoke/,
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup-user'],
     },
 
     /* Test against mobile viewports. */
