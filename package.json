@@ -21,7 +21,10 @@
     "lint:fix": "eslint . --fix",
     "check": "npm run typecheck && npm run lint && npm run format:check",
     "test:api:clean": "playwright test --project=api --grep-invert @known-bug",
-    "test:known-bugs": "playwright test --project=api --grep @known-bug --reporter=list"
+    "test:known-bugs": "playwright test --project=api --grep @known-bug --reporter=list",
+    "allure:generate": "allure generate allure-results --clean",
+    "allure:open": "allure open allure-report",
+    "allure:clean": "rm -rf allure-results allure-report"
   },
   "keywords": [
     "qa",
@@ -38,6 +41,8 @@
     "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
+    "allure": "^3.33.0",
+    "allure-playwright": "^3.15.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",

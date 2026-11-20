@@ -4,7 +4,14 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['node_modules/**', 'playwright-report/**', 'test-results/**'],
+    // Generated output: reports and test artifacts are built by tools, not written by us.
+    ignores: [
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+      'allure-results/**',
+      'allure-report/**',
+    ],
   },
 
   js.configs.recommended,
