@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from './allure.fixture';
 import { CategoryPage } from '../pages/admin/category.page';
 import { BrandPage } from '../pages/admin/brand.page';
 import { ProductPage } from '../pages/admin/product.page';

@@ -1,4 +1,5 @@
-import { test as base, APIRequestContext } from '@playwright/test';
+import type { APIRequestContext } from '@playwright/test';
+import { test as base } from './allure.fixture';
 import { CartApi } from '../api/cart.api';
 import { createAnonymousContext, createAdminContext } from '../api/request-context';
 import { WishlistApi } from '../api/wishlist.api';
